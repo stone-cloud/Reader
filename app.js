@@ -138,21 +138,53 @@
 
   /* ================= 内置书 & 书籍管理 ================= */
   async function ensureBuiltinBook() {
-    let book = await db.get('books', 'fde');
-    if (book) return book;
-    const res = await fetch('content/manifest.json');
-    if (!res.ok) throw new Error('无法加载 content/manifest.json');
-    const manifest = await res.json();
-    book = {
+    const existing = await db.get('books', 'fde');
+    let manifest = null;
+
+    try {
+      const res = await fetch('content/manifest.json', { cache: 'no-cache' });
+      if (res.ok) manifest = await res.json();
+    } catch (e) {
+      console.warn('加载 manifest 失败', e);
+    }
+
+    if (!manifest) {
+      if (existing) return existing;
+      throw new Error('无法加载 content/manifest.json，且无本地缓存');
+    }
+
+    const newBook = {
       id: 'fde',
       title: manifest.title || 'FDE - The Guidance Book',
       isBuiltin: true,
       chapters: manifest.chapters,
-      createdAt: Date.now(),
+      createdAt: existing?.createdAt || Date.now(),
       updatedAt: Date.now(),
     };
-    await db.put('books', book);
-    return book;
+
+    const changed =
+      !existing ||
+      existing.title !== newBook.title ||
+      chaptersDiffer(existing.chapters, newBook.chapters);
+
+    if (changed) {
+      await db.put('books', newBook);
+      console.log('[内置书] 检测到 manifest 更新，已刷新缓存');
+      return newBook;
+    }
+    return existing;
+  }
+
+  function chaptersDiffer(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return true;
+    if (a.length !== b.length) return true;
+    for (let i = 0; i < a.length; i++) {
+      const x = a[i], y = b[i];
+      if (!x || !y) return true;
+      if (x.id !== y.id || x.zh !== y.zh || x.en !== y.en
+          || x.titleZh !== y.titleZh || x.titleEn !== y.titleEn) return true;
+    }
+    return false;
   }
 
   async function loadBooks() {
@@ -181,14 +213,21 @@
 
   function updateDeleteBookButton() {
     const btn = $('#delete-book');
+    const refreshBtn = $('#refresh-book');
     const book = state.books.find((b) => b.id === state.currentBookId);
-    if (!book) { btn.disabled = true; btn.title = '无选中书籍'; return; }
+
+    if (!book) {
+      btn.disabled = true; btn.title = '无选中书籍';
+      refreshBtn.disabled = true; refreshBtn.title = '无选中书籍';
+      return;
+    }
+
     if (book.isBuiltin) {
-      btn.disabled = true;
-      btn.title = '内置书籍不可删除';
+      btn.disabled = true; btn.title = '内置书籍不可删除';
+      refreshBtn.disabled = false; refreshBtn.title = '从服务器重新加载内置书';
     } else {
-      btn.disabled = false;
-      btn.title = `删除「${book.title}」`;
+      btn.disabled = false; btn.title = `删除「${book.title}」`;
+      refreshBtn.disabled = true; refreshBtn.title = '仅内置书可刷新';
     }
   }
 
@@ -234,6 +273,22 @@
     }
   }
 
+  async function refreshBuiltinBook() {
+    const book = state.books.find((b) => b.id === state.currentBookId);
+    if (!book?.isBuiltin) return;
+    showToast('正在从服务器刷新…');
+    try {
+      await db.delete('books', 'fde');
+      await ensureBuiltinBook();
+      await loadBooks();
+      await switchBook('fde');
+      showToast('✓ 内置书已刷新');
+    } catch (e) {
+      console.error(e);
+      showToast('刷新失败：' + e.message, 'error');
+    }
+  }
+
   async function switchBook(bookId) {
     const book = state.books.find((b) => b.id === bookId);
     if (!book) return;
@@ -263,7 +318,7 @@
   async function loadBookFile(book, path) {
     if (!path) return '';
     if (book.isBuiltin) {
-      const res = await fetch(path);
+      const res = await fetch(path, { cache: 'no-cache' });
       return res.ok ? res.text() : '';
     }
     const f = await db.get('bookFiles', `${book.id}/${path}`);
@@ -1151,6 +1206,7 @@
   $('#book-select').addEventListener('change', (e) => switchBook(e.target.value));
   $('#chapter-select').addEventListener('change', (e) => loadChapter(e.target.value));
   $('#delete-book').addEventListener('click', () => deleteCurrentBook());
+  $('#refresh-book').addEventListener('click', refreshBuiltinBook);
 
   /* ================= 面板 & 导入导出 ================= */
   $('#toggle-notes').addEventListener('click', () => {
