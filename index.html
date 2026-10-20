@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的阅读器</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/markdown-it@14/dist/markdown-it.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+</head>
+<body>
+  <header class="toolbar">
+    <div class="toolbar-left">
+      <button id="toggle-nav" class="icon-btn" title="目录">☰</button>
+      <select id="chapter-select"></select>
+    </div>
+    <div class="toolbar-center">
+      <div class="view-switch">
+        <button data-view="zh">中文</button>
+        <button data-view="en">English</button>
+        <button data-view="both" class="active">对照</button>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <button id="font-dec" class="icon-btn" title="减小字号">A-</button>
+      <button id="font-inc" class="icon-btn" title="增大字号">A+</button>
+      <button id="theme-toggle" class="icon-btn" title="切换主题">🌓</button>
+      <button id="toggle-notes" class="icon-btn" title="笔记">📝</button>
+    </div>
+    <!-- 新增：阅读进度条 -->
+    <div id="reading-progress" class="reading-progress">
+      <div id="reading-progress-bar" class="reading-progress-bar"></div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside id="nav-panel" class="nav-panel">
+      <div class="nav-title">目录</div>
+      <ul id="toc-list"></ul>
+    </aside>
+
+    <section class="content">
+      <div class="pane" id="pane-zh">
+        <article class="markdown-body"></article>
+      </div>
+      <div class="pane" id="pane-en">
+        <article class="markdown-body"></article>
+      </div>
+    </section>
+
+    <aside id="notes-panel" class="notes-panel hidden">
+      <div class="notes-header">
+        <span>笔记</span>
+        <div class="notes-header-actions">
+          <label class="select-all-label" title="全选当前筛选">
+            <input type="checkbox" id="select-all-notes">
+            <span>全选</span>
+          </label>
+          <button id="batch-delete-notes" class="icon-btn danger" title="删除选中" disabled>🗑</button>
+          <button id="export-notes" class="icon-btn" title="导出">⬇</button>
+          <button id="import-notes-btn" class="icon-btn" title="导入">⬆</button>
+          <input type="file" id="import-notes-input" accept=".json" hidden>
+          <button id="close-notes" class="icon-btn">✕</button>
+        </div>
+      </div>
+      <!-- 新增：标签筛选条 -->
+      <div id="tag-filter" class="tag-filter"></div>
+      <ul id="notes-list"></ul>
+    </aside>
+  </main>
+
+  <div id="selection-toolbar" class="selection-toolbar hidden">
+    <button data-action="highlight">高亮</button>
+    <button data-action="note">记笔记</button>
+  </div>
+
+  <div id="note-dialog" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-title">添加笔记</div>
+      <blockquote id="note-quote" class="note-quote"></blockquote>
+      <!-- 新增：标签编辑区 -->
+      <div class="tag-editor" id="note-tags-editor"></div>
+      <input type="text" id="note-tag-input" placeholder="输入标签后按回车添加，如：核心概念 / 待复习">
+      <div id="note-tag-suggestions" class="tag-suggestions"></div>
+      <textarea id="note-input" placeholder="写下你的想法..."></textarea>
+      <div class="modal-actions">
+        <button id="note-cancel">取消</button>
+        <button id="note-save" class="primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

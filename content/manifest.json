@@ -1,0 +1,19 @@
+{
+  "title": "FDE - The Guidance Book",
+  "chapters": [
+    {
+      "id": "ch01",
+      "titleZh": "第 1 章 什么是前向部署工程师",
+      "titleEn": "Chapter 1 - What is an FDE",
+      "zh": "content/zh/ch01.md",
+      "en": "content/en/ch01.md"
+    },
+    {
+      "id": "ch02",
+      "titleZh": "第 2 章 角色与技能",
+      "titleEn": "Chapter 2 - Role & Skills",
+      "zh": "content/zh/ch02.md",
+      "en": "content/en/ch02.md"
+    }
+  ]
+}
