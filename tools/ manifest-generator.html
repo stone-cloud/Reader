@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manifest 生成器</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+      background: #f5f5f7; color: #222;
+    }
+    .container { max-width: 1000px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; }
+    .hint { color: #666; margin: 0 0 24px; line-height: 1.6; }
+    .hint code { background: #e5e7eb; padding: 1px 6px; border-radius: 3px; font-size: 12px; }
+    .drop-zone {
+      border: 2px dashed #c7c7cc; border-radius: 12px; padding: 40px;
+      text-align: center; background: #fff; transition: 0.2s;
+      cursor: pointer; margin-bottom: 16px;
+    }
+    .drop-zone.dragover { border-color: #3b82f6; background: #eff6ff; }
+    .drop-zone .icon { font-size: 40px; margin-bottom: 8px; }
+    .drop-zone p { margin: 6px 0; }
+    .file-actions { display: flex; gap: 12px; margin-bottom: 20px; }
+    .file-actions label {
+      padding: 8px 16px; background: #3b82f6; color: #fff;
+      border-radius: 6px; cursor: pointer; font-size: 14px;
+    }
+    .file-actions label:hover { background: #2563eb; }
+    .status {
+      padding: 12px 16px; background: #fff; border-radius: 8px;
+      margin-bottom: 16px; border-left: 4px solid #10b981; font-size: 13px;
+    }
+    .status.error { border-left-color: #dc2626; background: #fef2f2; }
+    .status.warning { border-left-color: #f59e0b; background: #fffbeb; }
+    .preview { background: #fff; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+    .preview table { width: 100%; border-collapse: collapse; }
+    .preview th, .preview td {
+      padding: 8px 12px; text-align: left;
+      border-bottom: 1px solid #e5e5e5; font-size: 13px;
+    }
+    .preview th { background: #fafafa; font-weight: 600; }
+    .preview input {
+      width: 100%; padding: 4px 8px; border: 1px solid #e5e5e5;
+      border-radius: 4px; font-size: 13px; font-family: inherit;
+    }
+    .preview input:focus { outline: none; border-color: #3b82f6; }
+    .title-input {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px; background: #fff;
+      padding: 12px 16px; border-radius: 8px;
+    }
+    .title-input label { font-weight: 500; flex-shrink: 0; }
+    .title-input input {
+      flex: 1; padding: 6px 10px; border: 1px solid #e5e5e5;
+      border-radius: 4px; font-size: 14px; font-family: inherit;
+    }
+    .download-btn {
+      padding: 10px 24px; background: #10b981; color: #fff;
+      border: none; border-radius: 6px; cursor: pointer;
+      font-size: 15px; font-weight: 500;
+    }
+    .download-btn:hover { background: #059669; }
+    .download-btn:disabled { background: #d1d5db; cursor: not-allowed; }
+    .lang-tag {
+      display: inline-block; padding: 1px 6px; border-radius: 3px;
+      font-size: 11px; background: #e5e7eb; color: #374151;
+    }
+    .lang-tag.zh { background: #fef3c7; color: #92400e; }
+    .lang-tag.en { background: #dbeafe; color: #1e40af; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Manifest 生成器</h1>
+    <p class="hint">
+      把包含 <code>zh/</code> 和 <code>en/</code> 子目录的书籍文件夹拖进来，或点击下方按钮选择。
+      自动配对中英文文件、读取每个 md 的 H1 作为标题，生成可下载的 <code>manifest.json</code>。
+      生成后建议人工检查一遍标题和顺序，然后再替换项目里的 manifest。
+    </p>
+
+    <div id="drop-zone" class="drop-zone">
+      <div class="icon">📚</div>
+      <p>把书籍文件夹拖到这里</p>
+      <p style="font-size: 13px; color: #999;">或使用下方按钮选择</p>
+    </div>
+
+    <div class="file-actions">
+      <label>
+        📁 选择文件夹
+        <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
+      </label>
+      <label>
+        📄 选择多个 md 文件
+        <input type="file" id="files-input" accept=".md" multiple hidden>
+      </label>
+    </div>
+
+    <div id="status"></div>
+
+    <div id="title-wrap" class="title-input" style="display: none;">
+      <label>书名：</label>
+      <input type="text" id="book-title" placeholder="例如：FDE - The Guidance Book">
+    </div>
+
+    <div id="preview-wrap"></div>
+
+    <div style="text-align: right; margin-top: 16px;">
+      <button id="download-btn" class="download-btn" disabled>下载 manifest.json</button>
+    </div>
+  </div>
+
+  <script>
+    const state = { files: [], chapters: [], bookTitle: '' };
+    const $ = (s) => document.querySelector(s);
+
+    function extractTitle(content, fallback) {
+      const m = content.match(/^#\s+(.+?)\s*$/m);
+      return m ? m[1].trim() : fallback;
+    }
+
+    function analyze(files) {
+      const zhMap = new Map(), enMap = new Map(), unknown = [];
+      for (const f of files) {
+        const zh = f.path.match(/(?:^|\/)zh\/([^/]+\.md)$/i);
+        const en = f.path.match(/(?:^|\/)en\/([^/]+\.md)$/i);
+        if (zh) zhMap.set(zh[1], f);
+        else if (en) enMap.set(en[1], f);
+        else unknown.push(f);
+      }
+      const allBase = new Set([...zhMap.keys(), ...enMap.keys()]);
+      const chapters = [];
+      for (const basename of Array.from(allBase).sort()) {
+        const zhF = zhMap.get(basename), enF = enMap.get(basename);
+        const id = basename.replace(/\.md$/i, '');
+        chapters.push({
+          id, basename,
+          zh: zhF ? zhF.path : '', en: enF ? enF.path : '',
+          titleZh: zhF ? extractTitle(zhF.content, id) : '',
+          titleEn: enF ? extractTitle(enF.content, id) : '',
+          hasZh: !!zhF, hasEn: !!enF,
+        });
+      }
+      return { chapters, unknown, zhCount: zhMap.size, enCount: enMap.size };
+    }
+
+    function render() {
+      const { chapters } = state;
+      $('#preview-wrap').innerHTML = '';
+      if (!chapters.length) { $('#download-btn').disabled = true; return; }
+      const box = document.createElement('div');
+      box.className = 'preview';
+      const table = document.createElement('table');
+      table.innerHTML = `
+        <thead><tr>
+          <th style="width:60px">#</th><th style="width:100px">ID</th>
+          <th>中文标题</th><th>English Title</th><th style="width:70px">语言</th>
+        </tr></thead><tbody></tbody>`;
+      const tbody = table.querySelector('tbody');
+      chapters.forEach((ch, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${i + 1}</td>`;
+        const idTd = document.createElement('td');
+        const idIn = document.createElement('input');
+        idIn.value = ch.id; idIn.addEventListener('input', () => ch.id = idIn.value);
+        idTd.appendChild(idIn);
+        const zhTd = document.createElement('td');
+        const zhIn = document.createElement('input');
+        zhIn.value = ch.titleZh;
+        zhIn.placeholder = ch.hasZh ? '' : '（无中文文件）';
+        zhIn.addEventListener('input', () => ch.titleZh = zhIn.value);
+        zhTd.appendChild(zhIn);
+        const enTd = document.createElement('td');
+        const enIn = document.createElement('input');
+        enIn.value = ch.titleEn;
+        enIn.placeholder = ch.hasEn ? '' : '（无英文文件）';
+        enIn.addEventListener('input', () => ch.titleEn = enIn.value);
+        enTd.appendChild(enIn);
+        const stTd = document.createElement('td');
+        stTd.innerHTML = ch.hasZh && ch.hasEn
+          ? '<span class="lang-tag">✓ 双语</span>'
+          : ch.hasZh ? '<span class="lang-tag zh">仅中</span>'
+          : '<span class="lang-tag en">仅英</span>';
+        tr.append(idTd, zhTd, enTd, stTd);
+        tbody.appendChild(tr);
+      });
+      box.appendChild(table);
+      $('#preview-wrap').appendChild(box);
+      $('#download-btn').disabled = false;
+    }
+
+    function buildManifest() {
+      return {
+        title: state.bookTitle || '未命名书籍',
+        chapters: state.chapters.map((ch) => ({
+          id: ch.id,
+          titleZh: ch.titleZh || ch.titleEn || ch.id,
+          titleEn: ch.titleEn || ch.titleZh || ch.id,
+          zh: ch.zh, en: ch.en,
+        })),
+      };
+    }
+
+    function processFiles(files) {
+      const status = $('#status');
+      if (!files.length) {
+        status.className = 'status error';
+        status.textContent = '没有找到 .md 文件。';
+        return;
+      }
+      const result = analyze(files);
+      if (!result.chapters.length) {
+        status.className = 'status error';
+        status.textContent = '没有在 zh/ 或 en/ 目录下识别到 .md 文件。请检查目录结构。';
+        return;
+      }
+      state.files = files;
+      state.chapters = result.chapters;
+      if (!state.bookTitle) {
+        const first = files[0].path;
+        const parts = first.split('/');
+        state.bookTitle = parts.length > 1 ? parts[0] : '我的书籍';
+        $('#book-title').value = state.bookTitle;
+      }
+      $('#title-wrap').style.display = 'flex';
+      const msgs = [`✓ 识别到 ${result.zhCount} 个中文、${result.enCount} 个英文，共 ${result.chapters.length} 章。`];
+      if (result.unknown.length) msgs.push(`⚠ ${result.unknown.length} 个 md 不在 zh/ 或 en/ 下，已忽略。`);
+      const single = result.chapters.filter(c => !c.hasZh || !c.hasEn).length;
+      if (single) msgs.push(`⚠ ${single} 章只有单一语言。`);
+      status.className = 'status' + (single || result.unknown.length ? ' warning' : '');
+      status.textContent = msgs.join(' ');
+      render();
+    }
+
+    async function readFileList(fileList) {
+      const files = [];
+      for (const file of fileList) {
+        if (!file.name.endsWith('.md')) continue;
+        files.push({ path: file.webkitRelativePath || file.name, content: await file.text() });
+      }
+      return files;
+    }
+
+    $('#folder-input').addEventListener('change', async (e) => {
+      processFiles(await readFileList(e.target.files));
+    });
+    $('#files-input').addEventListener('change', async (e) => {
+      processFiles(await readFileList(e.target.files));
+    });
+    $('#book-title').addEventListener('input', (e) => state.bookTitle = e.target.value);
+
+    $('#download-btn').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(buildManifest(), null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'manifest.json'; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // 拖拽
+    const dz = $('#drop-zone');
+    ['dragenter', 'dragover'].forEach(ev =>
+      dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(ev =>
+      dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('dragover'); }));
+    dz.addEventListener('drop', async (e) => {
+      const items = e.dataTransfer.items;
+      if (!items) return;
+      const files = [];
+      async function walk(entry, prefix) {
+        if (entry.isFile) {
+          return new Promise((resolve) => {
+            entry.file(async (file) => {
+              if (file.name.endsWith('.md')) {
+                files.push({ path: prefix + file.name, content: await file.text() });
+              }
+              resolve();
+            });
+          });
+        }
+        if (entry.isDirectory) {
+          const reader = entry.createReader();
+          const entries = await new Promise((r) => reader.readEntries(r));
+          for (const en of entries) await walk(en, prefix + entry.name + '/');
+        }
+      }
+      for (let i = 0; i < items.length; i++) {
+        const entry = items[i].webkitGetAsEntry && items[i].webkitGetAsEntry();
+        if (entry) await walk(entry, '');
+      }
+      processFiles(files);
+    });
+  </script>
+</body>
+</html>

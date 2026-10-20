@@ -4,14 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>我的阅读器</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/markdown-it@14/dist/markdown-it.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
 <body>
   <header class="toolbar">
     <div class="toolbar-left">
       <button id="toggle-nav" class="icon-btn" title="目录">☰</button>
+      <select id="book-select" title="切换书籍"></select>
       <select id="chapter-select"></select>
     </div>
     <div class="toolbar-center">
@@ -25,9 +28,9 @@
       <button id="font-dec" class="icon-btn" title="减小字号">A-</button>
       <button id="font-inc" class="icon-btn" title="增大字号">A+</button>
       <button id="theme-toggle" class="icon-btn" title="切换主题">🌓</button>
+      <button id="upload-book" class="icon-btn" title="上传书籍">📚+</button>
       <button id="toggle-notes" class="icon-btn" title="笔记">📝</button>
     </div>
-    <!-- 新增：阅读进度条 -->
     <div id="reading-progress" class="reading-progress">
       <div id="reading-progress-bar" class="reading-progress-bar"></div>
     </div>
@@ -38,23 +41,16 @@
       <div class="nav-title">目录</div>
       <ul id="toc-list"></ul>
     </aside>
-
     <section class="content">
-      <div class="pane" id="pane-zh">
-        <article class="markdown-body"></article>
-      </div>
-      <div class="pane" id="pane-en">
-        <article class="markdown-body"></article>
-      </div>
+      <div class="pane" id="pane-zh"><article class="markdown-body"></article></div>
+      <div class="pane" id="pane-en"><article class="markdown-body"></article></div>
     </section>
-
     <aside id="notes-panel" class="notes-panel hidden">
       <div class="notes-header">
         <span>笔记</span>
         <div class="notes-header-actions">
           <label class="select-all-label" title="全选当前筛选">
-            <input type="checkbox" id="select-all-notes">
-            <span>全选</span>
+            <input type="checkbox" id="select-all-notes"><span>全选</span>
           </label>
           <button id="batch-delete-notes" class="icon-btn danger" title="删除选中" disabled>🗑</button>
           <button id="export-notes" class="icon-btn" title="导出">⬇</button>
@@ -63,7 +59,6 @@
           <button id="close-notes" class="icon-btn">✕</button>
         </div>
       </div>
-      <!-- 新增：标签筛选条 -->
       <div id="tag-filter" class="tag-filter"></div>
       <ul id="notes-list"></ul>
     </aside>
@@ -78,14 +73,44 @@
     <div class="modal-content">
       <div class="modal-title">添加笔记</div>
       <blockquote id="note-quote" class="note-quote"></blockquote>
-      <!-- 新增：标签编辑区 -->
       <div class="tag-editor" id="note-tags-editor"></div>
-      <input type="text" id="note-tag-input" placeholder="输入标签后按回车添加，如：核心概念 / 待复习">
+      <input type="text" id="note-tag-input" placeholder="输入标签后按回车添加">
       <div id="note-tag-suggestions" class="tag-suggestions"></div>
       <textarea id="note-input" placeholder="写下你的想法..."></textarea>
       <div class="modal-actions">
         <button id="note-cancel">取消</button>
         <button id="note-save" class="primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="upload-dialog" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-title">上传书籍</div>
+      <p class="upload-hint">
+        · <strong>zip 文件</strong>：把书籍文件夹压缩成 zip 后上传<br>
+        · <strong>选择文件夹</strong>：直接选中包含 <code>zh/</code> 和 <code>en/</code> 子目录的文件夹<br>
+        如已有 <code>manifest.json</code> 会直接使用，没有则自动根据 zh/ en/ 目录生成。
+      </p>
+      <div class="upload-source">
+        <label class="upload-btn">
+          <input type="file" id="upload-zip-input" accept=".zip" hidden>
+          📦 选择 zip 文件
+        </label>
+        <label class="upload-btn">
+          <input type="file" id="upload-folder-input" webkitdirectory directory multiple hidden>
+          📁 选择文件夹
+        </label>
+      </div>
+      <div id="upload-status" class="upload-status"></div>
+      <div id="upload-preview" class="upload-preview"></div>
+      <div id="upload-title-wrap" style="display: none;">
+        <label>书名：</label>
+        <input type="text" id="upload-title" placeholder="书籍名称">
+      </div>
+      <div class="modal-actions">
+        <button id="upload-cancel">取消</button>
+        <button id="upload-confirm" class="primary" disabled>导入</button>
       </div>
     </div>
   </div>

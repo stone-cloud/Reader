@@ -330,3 +330,53 @@ select {
   border-style: solid;
   color: var(--accent);
 }
+/* ===== v4: 书籍选择器 ===== */
+#book-select { max-width: 160px; }
+#chapter-select { max-width: 280px; }
+
+/* ===== v4: 上传弹窗 ===== */
+.upload-hint {
+  font-size: 13px; color: var(--text-secondary);
+  line-height: 1.7; margin: 0;
+}
+.upload-hint code {
+  background: var(--bg-secondary); padding: 1px 5px;
+  border-radius: 3px; font-size: 12px;
+}
+.upload-source { display: flex; gap: 10px; }
+.upload-btn {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 10px 16px;
+  border: 1px dashed var(--border); border-radius: 6px;
+  cursor: pointer; font-size: 14px; flex: 1;
+  background: var(--bg-secondary);
+  transition: 0.15s;
+}
+.upload-btn:hover { border-color: var(--accent); color: var(--accent); }
+.upload-status {
+  font-size: 13px; color: var(--text-secondary);
+  min-height: 20px; line-height: 1.5;
+}
+.upload-status.error { color: #dc2626; }
+.upload-status.success { color: #16a34a; }
+.upload-preview {
+  max-height: 220px; overflow-y: auto;
+  background: var(--bg-secondary); border-radius: 6px; font-size: 12px;
+}
+.upload-preview:empty { display: none; }
+.upload-preview ul { list-style: none; margin: 0; padding: 8px 12px; }
+.upload-preview li {
+  padding: 4px 0; color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.upload-preview li:last-child { border-bottom: none; }
+#upload-title-wrap {
+  display: flex; gap: 8px; align-items: center; font-size: 13px;
+}
+#upload-title-wrap label { flex-shrink: 0; }
+#upload-title {
+  flex: 1; padding: 6px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text); font-family: inherit; font-size: 13px;
+}
