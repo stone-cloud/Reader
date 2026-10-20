@@ -1,19 +1,89 @@
 {
-  "title": "FDE - The Guidance Book",
+  "title": "content",
   "chapters": [
     {
       "id": "ch01",
-      "titleZh": "第 1 章 什么是前向部署工程师",
-      "titleEn": "Chapter 1 - What is an FDE",
+      "titleZh": "第 1 章 FDE 的崛起",
+      "titleEn": "Chapter 1 The Rise of FDE",
       "zh": "content/zh/ch01.md",
       "en": "content/en/ch01.md"
     },
     {
       "id": "ch02",
-      "titleZh": "第 2 章 角色与技能",
-      "titleEn": "Chapter 2 - Role & Skills",
+      "titleZh": "第 2 章 解决正确的问题",
+      "titleEn": "Chapter 2 Solving the Right Problem",
       "zh": "content/zh/ch02.md",
       "en": "content/en/ch02.md"
+    },
+    {
+      "id": "03-第3章-赢得客户",
+      "titleZh": "第 3 章 赢得客户",
+      "titleEn": "Chapter 3: Winning Customers",
+      "zh": "content/zh/03-第3章-赢得客户.md",
+      "en": "content/en/03-Chapter-3-Winning-Customers.md"
+    },
+    {
+      "id": "04-第4章-激活部署",
+      "titleZh": "第 4 章 激活部署",
+      "titleEn": "Chapter 4 Activating the Deployment",
+      "zh": "content/zh/04-第4章-激活部署.md",
+      "en": "content/en/04-Chapter-4-Activating-the-Deployment.md"
+    },
+    {
+      "id": "05-第5章-守住续约",
+      "titleZh": "第 5 章 守住续约",
+      "titleEn": "Chapter 5 Securing the Renewal",
+      "zh": "content/zh/05-第5章-守住续约.md",
+      "en": "content/en/05-Chapter-5-Securing-the-Renewal.md"
+    },
+    {
+      "id": "06-第6章-扩大收入",
+      "titleZh": "第 6 章 扩大收入",
+      "titleEn": "Chapter 6 Expanding Revenue",
+      "zh": "content/zh/06-第6章-扩大收入.md",
+      "en": "content/en/06-Chapter-6-Expanding-Revenue.md"
+    },
+    {
+      "id": "07-第7章-规模化复制",
+      "titleZh": "第 7 章 规模化复制",
+      "titleEn": "Chapter 7: Scalable Replication",
+      "zh": "content/zh/07-第7章-规模化复制.md",
+      "en": "content/en/07-Chapter-7-Scalable-Replication.md"
+    },
+    {
+      "id": "08-第8章-完整案例集",
+      "titleZh": "第 8 章 完整案例集",
+      "titleEn": "Chapter 8: Complete Case Studies",
+      "zh": "content/zh/08-第8章-完整案例集.md",
+      "en": "content/en/08-Chapter-8-Complete-Case-Studies.md"
+    },
+    {
+      "id": "09-后记-FDE的职业道德",
+      "titleZh": "后记 FDE 的职业道德",
+      "titleEn": "Epilogue: The Professional Ethics of an FDE",
+      "zh": "content/zh/09-后记-FDE的职业道德.md",
+      "en": "content/en/09-Epilogue-The-Professional-Ethics-of-an-FDE.md"
+    },
+    {
+      "id": "10-附录A-FDE应当关注的常用指标",
+      "titleZh": "附录 A FDE 应当关注的常用指标",
+      "titleEn": "Appendix A: Common Metrics FDEs Should Track",
+      "zh": "content/zh/10-附录A-FDE应当关注的常用指标.md",
+      "en": "content/en/10-Appendix-A-Common-Metrics-FDEs-Should-Track.md"
+    },
+    {
+      "id": "11-附录B-FDE人物与团队名单",
+      "titleZh": "附录 B FDE 人物与团队名单",
+      "titleEn": "Appendix B List of FDE Figures and Teams",
+      "zh": "content/zh/11-附录B-FDE人物与团队名单.md",
+      "en": "content/en/11-Appendix-B-List-of-FDE-Figures-and-Teams.md"
+    },
+    {
+      "id": "12-附录C-全书案例索引与资料出处",
+      "titleZh": "附录 C 全书案例索引与资料出处",
+      "titleEn": "Appendix C: Book Case Index and Data Sources",
+      "zh": "content/zh/12-附录C-全书案例索引与资料出处.md",
+      "en": "content/en/12-Appendix-C-Case-Index-and-Data-Sources.md"
     }
   ]
 }

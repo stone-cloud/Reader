@@ -15,6 +15,7 @@
     <div class="toolbar-left">
       <button id="toggle-nav" class="icon-btn" title="目录">☰</button>
       <select id="book-select" title="切换书籍"></select>
+      <button id="delete-book" class="icon-btn danger" title="删除当前书籍" disabled>🗑</button>
       <select id="chapter-select"></select>
     </div>
     <div class="toolbar-center">
@@ -84,36 +85,38 @@
     </div>
   </div>
 
-  <div id="upload-dialog" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-title">上传书籍</div>
-      <p class="upload-hint">
-        · <strong>zip 文件</strong>：把书籍文件夹压缩成 zip 后上传<br>
-        · <strong>选择文件夹</strong>：直接选中包含 <code>zh/</code> 和 <code>en/</code> 子目录的文件夹<br>
-        如已有 <code>manifest.json</code> 会直接使用，没有则自动根据 zh/ en/ 目录生成。
-      </p>
-      <div class="upload-source">
-        <label class="upload-btn">
-          <input type="file" id="upload-zip-input" accept=".zip" hidden>
-          📦 选择 zip 文件
-        </label>
-        <label class="upload-btn">
-          <input type="file" id="upload-folder-input" webkitdirectory directory multiple hidden>
-          📁 选择文件夹
-        </label>
-      </div>
-      <div id="upload-status" class="upload-status"></div>
-      <div id="upload-preview" class="upload-preview"></div>
-      <div id="upload-title-wrap" style="display: none;">
-        <label>书名：</label>
-        <input type="text" id="upload-title" placeholder="书籍名称">
-      </div>
-      <div class="modal-actions">
-        <button id="upload-cancel">取消</button>
-        <button id="upload-confirm" class="primary" disabled>导入</button>
-      </div>
+<div id="upload-dialog" class="modal hidden">
+  <div class="modal-content" style="max-width: 920px;">
+    <div class="modal-title">上传书籍</div>
+    <p class="upload-hint">
+      · <strong>zip 文件</strong>：把书籍文件夹压缩成 zip 后上传<br>
+      · <strong>选择文件夹</strong>：直接选中包含 <code>zh/</code> 和 <code>en/</code> 子目录的文件夹<br>
+      如已有 <code>manifest.json</code> 会直接使用，没有则自动根据 zh/ en/ 目录生成。<br>
+      <strong>生成结果可在下方表格中直接修改</strong>，也能点「导出 manifest.json」下载检查。
+    </p>
+    <div class="upload-source">
+      <label class="upload-btn">
+        <input type="file" id="upload-zip-input" accept=".zip" hidden>
+        📦 选择 zip 文件
+      </label>
+      <label class="upload-btn">
+        <input type="file" id="upload-folder-input" webkitdirectory directory multiple hidden>
+        📁 选择文件夹
+      </label>
+    </div>
+    <div id="upload-status" class="upload-status"></div>
+    <div id="upload-preview" class="upload-preview"></div>
+    <div id="upload-title-wrap" style="display: none;">
+      <label>书名：</label>
+      <input type="text" id="upload-title" placeholder="书籍名称">
+    </div>
+    <div class="modal-actions">
+      <button id="upload-export" class="icon-btn" style="margin-right: auto;" disabled>⬇ 导出 manifest.json</button>
+      <button id="upload-cancel">取消</button>
+      <button id="upload-confirm" class="primary" disabled>导入</button>
     </div>
   </div>
+</div>
 
   <script src="app.js"></script>
 </body>

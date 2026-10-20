@@ -11,10 +11,42 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
       background: #f5f5f7; color: #222;
     }
-    .container { max-width: 1000px; margin: 0 auto; }
-    h1 { margin: 0 0 8px; }
-    .hint { color: #666; margin: 0 0 24px; line-height: 1.6; }
-    .hint code { background: #e5e7eb; padding: 1px 6px; border-radius: 3px; font-size: 12px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { margin: 0 0 16px; }
+
+    /* ===== 命名指南 ===== */
+    .guide {
+      background: #fff; border-radius: 10px; padding: 16px 20px;
+      margin-bottom: 20px; border-left: 4px solid #3b82f6;
+    }
+    .guide summary {
+      cursor: pointer; font-weight: 600; font-size: 15px;
+      color: #1e40af; user-select: none;
+    }
+    .guide[open] summary { margin-bottom: 12px; }
+    .guide-content { font-size: 13px; line-height: 1.8; color: #374151; }
+    .guide-content h3 {
+      margin: 16px 0 8px; font-size: 14px;
+      color: #111827; border-left: 3px solid #3b82f6; padding-left: 8px;
+    }
+    .guide-content h3:first-child { margin-top: 0; }
+    .guide-content code {
+      background: #f3f4f6; padding: 1px 6px;
+      border-radius: 3px; font-size: 12px;
+      color: #be185d;
+    }
+    .guide-content pre {
+      background: #1f2937; color: #f9fafb; padding: 12px 16px;
+      border-radius: 6px; overflow-x: auto; font-size: 12px;
+      line-height: 1.6; margin: 8px 0;
+    }
+    .guide-content ul { margin: 6px 0; padding-left: 20px; }
+    .guide-content li { margin: 4px 0; }
+    .guide-content .ok { color: #059669; }
+    .guide-content .warn { color: #d97706; }
+    .guide-content .bad { color: #dc2626; }
+
+    /* ===== 拖拽区 ===== */
     .drop-zone {
       border: 2px dashed #c7c7cc; border-radius: 12px; padding: 40px;
       text-align: center; background: #fff; transition: 0.2s;
@@ -23,30 +55,23 @@
     .drop-zone.dragover { border-color: #3b82f6; background: #eff6ff; }
     .drop-zone .icon { font-size: 40px; margin-bottom: 8px; }
     .drop-zone p { margin: 6px 0; }
+
     .file-actions { display: flex; gap: 12px; margin-bottom: 20px; }
     .file-actions label {
       padding: 8px 16px; background: #3b82f6; color: #fff;
       border-radius: 6px; cursor: pointer; font-size: 14px;
     }
     .file-actions label:hover { background: #2563eb; }
+
     .status {
       padding: 12px 16px; background: #fff; border-radius: 8px;
-      margin-bottom: 16px; border-left: 4px solid #10b981; font-size: 13px;
+      margin-bottom: 16px; border-left: 4px solid #10b981;
+      font-size: 13px; line-height: 1.6;
     }
     .status.error { border-left-color: #dc2626; background: #fef2f2; }
     .status.warning { border-left-color: #f59e0b; background: #fffbeb; }
-    .preview { background: #fff; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
-    .preview table { width: 100%; border-collapse: collapse; }
-    .preview th, .preview td {
-      padding: 8px 12px; text-align: left;
-      border-bottom: 1px solid #e5e5e5; font-size: 13px;
-    }
-    .preview th { background: #fafafa; font-weight: 600; }
-    .preview input {
-      width: 100%; padding: 4px 8px; border: 1px solid #e5e5e5;
-      border-radius: 4px; font-size: 13px; font-family: inherit;
-    }
-    .preview input:focus { outline: none; border-color: #3b82f6; }
+    .status .warn-line { color: #b45309; }
+
     .title-input {
       display: flex; align-items: center; gap: 12px;
       margin-bottom: 16px; background: #fff;
@@ -57,29 +82,161 @@
       flex: 1; padding: 6px 10px; border: 1px solid #e5e5e5;
       border-radius: 4px; font-size: 14px; font-family: inherit;
     }
+
+    /* ===== 预览表格 ===== */
+    .preview {
+      background: #fff; border-radius: 8px;
+      overflow: hidden; margin-bottom: 16px;
+    }
+    .preview table {
+      width: 100%; border-collapse: collapse;
+      table-layout: auto;
+    }
+    .preview th, .preview td {
+      padding: 8px 10px; text-align: left;
+      border-bottom: 1px solid #e5e5e5; font-size: 13px;
+      vertical-align: middle;
+    }
+    .preview th {
+      background: #f9fafb; font-weight: 600; font-size: 12px;
+      color: #6b7280; text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .preview tr:last-child td { border-bottom: none; }
+    .preview input, .preview select {
+      width: 100%; padding: 4px 8px;
+      border: 1px solid #e5e5e5; border-radius: 4px;
+      font-size: 13px; font-family: inherit;
+      background: #fff; color: #111;
+    }
+    .preview input:focus, .preview select:focus {
+      outline: none; border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+    .preview td.col-idx { width: 36px; color: #9ca3af; text-align: center; }
+    .preview td.col-status { width: 80px; }
+    .preview td.col-id { width: 110px; }
+    .preview td.col-file { width: 140px; }
+    .preview td.col-actions { width: 100px; }
+
+    .file-name {
+      display: inline-block; max-width: 100%;
+      overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; color: #374151;
+      font-family: ui-monospace, monospace; font-size: 12px;
+    }
+    .file-missing { color: #9ca3af; font-size: 12px; }
+
+    .badge {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 10px; font-size: 11px; font-weight: 500;
+      white-space: nowrap;
+    }
+    .badge-ok { background: #d1fae5; color: #065f46; }
+    .badge-warn { background: #fef3c7; color: #92400e; }
+    .badge-error { background: #fee2e2; color: #991b1b; }
+    .badge-zh { background: #e0e7ff; color: #3730a3; }
+    .badge-en { background: #fce7f3; color: #9f1239; }
+    .badge-manual { background: #f3f4f6; color: #4b5563; }
+
+    .row-actions { display: flex; gap: 3px; }
+    .row-actions button {
+      padding: 2px 7px; font-size: 12px;
+      border: 1px solid #e5e5e5; border-radius: 3px;
+      background: #fff; color: #374151; cursor: pointer;
+    }
+    .row-actions button:hover:not(:disabled) {
+      border-color: #3b82f6; color: #3b82f6;
+    }
+    .row-actions button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .bottom-actions {
+      display: flex; justify-content: flex-end;
+      gap: 12px; margin-top: 16px;
+    }
     .download-btn {
       padding: 10px 24px; background: #10b981; color: #fff;
       border: none; border-radius: 6px; cursor: pointer;
       font-size: 15px; font-weight: 500;
     }
-    .download-btn:hover { background: #059669; }
+    .download-btn:hover:not(:disabled) { background: #059669; }
     .download-btn:disabled { background: #d1d5db; cursor: not-allowed; }
-    .lang-tag {
-      display: inline-block; padding: 1px 6px; border-radius: 3px;
-      font-size: 11px; background: #e5e7eb; color: #374151;
+    .ghost-btn {
+      padding: 10px 20px; background: #fff; color: #374151;
+      border: 1px solid #d1d5db; border-radius: 6px;
+      cursor: pointer; font-size: 14px;
     }
-    .lang-tag.zh { background: #fef3c7; color: #92400e; }
-    .lang-tag.en { background: #dbeafe; color: #1e40af; }
+    .ghost-btn:hover:not(:disabled) { border-color: #3b82f6; color: #3b82f6; }
+    .ghost-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Manifest 生成器</h1>
-    <p class="hint">
-      把包含 <code>zh/</code> 和 <code>en/</code> 子目录的书籍文件夹拖进来，或点击下方按钮选择。
-      自动配对中英文文件、读取每个 md 的 H1 作为标题，生成可下载的 <code>manifest.json</code>。
-      生成后建议人工检查一遍标题和顺序，然后再替换项目里的 manifest。
-    </p>
+
+    <details class="guide">
+      <summary>📖 命名指南（首次使用建议先看）</summary>
+      <div class="guide-content">
+        <h3>推荐目录结构</h3>
+        <pre>your-book/
+├── manifest.json      ← 可选，工具会自动生成
+├── zh/
+│   ├── 01-简介.md
+│   ├── 02-核心概念.md
+│   └── 03-实践.md
+└── en/
+    ├── 01-intro.md
+    ├── 02-core-concepts.md
+    └── 03-practice.md</pre>
+
+        <h3>三种有效的文件名对应方式</h3>
+        <p><strong class="ok">方式 1（最可靠）：完全相同文件名</strong></p>
+        <ul>
+          <li><code>zh/01-intro.md</code> ↔ <code>en/01-intro.md</code></li>
+          <li>中英文文件夹里用一模一样的文件名，工具直接配对，不会出错</li>
+        </ul>
+
+        <p><strong class="ok">方式 2（推荐）：相同序号开头</strong></p>
+        <ul>
+          <li><code>zh/01-简介.md</code> ↔ <code>en/01-intro.md</code></li>
+          <li>序号支持这些写法：<code>01-xxx</code>、<code>01_xxx</code>、<code>01.xxx</code>、<code>01 xxx</code></li>
+          <li><code>ch01-xxx</code>、<code>chapter-01-xxx</code>、<code>ch_01_xxx</code></li>
+          <li><code>第1章xxx</code>、<code>第一章xxx</code>、<code>第01章xxx</code></li>
+          <li>数字可以是 <code>1</code>、<code>01</code>、<code>001</code>，都识别为同一序号</li>
+        </ul>
+
+        <p><strong class="warn">方式 3（兜底）：按文件名排序顺序配对</strong></p>
+        <ul>
+          <li>中英文文件夹各自按文件名排序，逐一对应</li>
+          <li class="bad">风险：任一文件夹缺文件就会全部错位</li>
+          <li>只在无法用方式 1、2 匹配时启用，结果会标记为「~ 顺序」提醒你人工核对</li>
+        </ul>
+
+        <h3>常见错误命名</h3>
+        <ul>
+          <li class="bad">❌ 中英文用不同序号：<code>zh/01-简介.md</code> + <code>en/02-intro.md</code></li>
+          <li class="bad">❌ 一方有序号一方没有：<code>zh/01-简介.md</code> + <code>en/intro.md</code></li>
+          <li class="bad">❌ 同一文件夹里序号重复：<code>zh/01-a.md</code> + <code>zh/01-b.md</code>（会产生冲突）</li>
+          <li class="bad">❌ 中英文文件混在同一目录（必须分开放在 <code>zh/</code> 和 <code>en/</code>）</li>
+          <li class="bad">❌ 文件名没序号且中英不同：<code>zh/简介.md</code> + <code>en/intro.md</code>（只能走顺序配对）</li>
+        </ul>
+
+        <h3>关于 macOS 的 <code>._</code> 文件</h3>
+        <ul>
+          <li>macOS 打包 zip、AirDrop、部分 U 盘会生成 <code>._filename</code> 这类 AppleDouble 文件</li>
+          <li>它们不是真实内容，会让识别错乱</li>
+          <li><strong>本工具会自动过滤</strong> <code>._*</code>、<code>.DS_Store</code>、<code>.Thumbs.db</code> 以及所有以 <code>.</code> 开头的文件，无需手动删</li>
+          <li>状态栏会告诉你过滤掉了多少个系统文件</li>
+        </ul>
+
+        <h3>匹配优先级总览</h3>
+        <pre>1. 文件名完全相同              → ✓ 精确
+2. 序号相同（如 01 ↔ 01）      → ↔ 序号
+3. 两边按名字排序后逐一配对     → ~ 顺序（有风险，需核对）
+4. 手动从下拉里指定             → ✋ 手动
+5. 单侧缺失                     → 中 / 英 单语章节</pre>
+      </div>
+    </details>
 
     <div id="drop-zone" class="drop-zone">
       <div class="icon">📚</div>
@@ -107,90 +264,471 @@
 
     <div id="preview-wrap"></div>
 
-    <div style="text-align: right; margin-top: 16px;">
-      <button id="download-btn" class="download-btn" disabled>下载 manifest.json</button>
+    <div class="bottom-actions">
+      <button id="export-btn" class="download-btn" disabled>下载 manifest.json</button>
     </div>
   </div>
 
   <script>
-    const state = { files: [], chapters: [], bookTitle: '' };
+    const state = {
+      bookTitle: '',
+      zhFiles: [],
+      enFiles: [],
+      chapters: [],
+      ignoredCount: 0,
+      otherFiles: 0,
+    };
     const $ = (s) => document.querySelector(s);
 
+    /* ================= 文件过滤 ================= */
+    function isIgnoredFile(path) {
+      const name = path.split('/').pop();
+      if (!name) return true;
+      if (name.startsWith('._')) return true;              // macOS AppleDouble
+      if (name === '.DS_Store' || name === '.Thumbs.db') return true;
+      if (name === 'Thumbs.db') return true;
+      if (name.startsWith('.')) return true;                // 任何隐藏文件
+      return false;
+    }
+
+    function isMdFile(path) {
+      return /\.md$/i.test(path);
+    }
+
+    /* ================= 标题提取 ================= */
     function extractTitle(content, fallback) {
       const m = content.match(/^#\s+(.+?)\s*$/m);
       return m ? m[1].trim() : fallback;
     }
 
-    function analyze(files) {
-      const zhMap = new Map(), enMap = new Map(), unknown = [];
+    /* ================= 序号提取 ================= */
+    const ZH_DIGITS = {
+      '零': 0, '〇': 0, '一': 1, '二': 2, '两': 2, '三': 3, '四': 4,
+      '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
+    };
+
+    function zhNumberToInt(s) {
+      if (!s) return null;
+      if (/^\d+$/.test(s)) return parseInt(s, 10);
+      if (s.length === 1) return ZH_DIGITS[s] ?? null;
+      if (s.length === 2) {
+        if (s[0] === '十') return 10 + (ZH_DIGITS[s[1]] ?? 0);
+        if (s[1] === '十') return (ZH_DIGITS[s[0]] ?? 0) * 10;
+      }
+      if (s.length === 3 && s[1] === '十') {
+        return (ZH_DIGITS[s[0]] ?? 0) * 10 + (ZH_DIGITS[s[2]] ?? 0);
+      }
+      return null;
+    }
+
+    function extractOrder(filename) {
+      const base = filename.replace(/\.md$/i, '');
+
+      // 第X章 / 第X讲 / 第X课 / 第X节 / 第X回
+      let m = base.match(/第\s*([零〇一二两三四五六七八九十]+)\s*[章讲课节回]/);
+      if (m) {
+        const n = zhNumberToInt(m[1]);
+        if (n !== null) return n;
+      }
+
+      // chapter-01 / ch01 / ch-01 / ch_01
+      m = base.match(/ch(?:apter)?[\s._-]*(\d+)/i);
+      if (m) return parseInt(m[1], 10);
+
+      // 01-xxx / 01.xxx / 01_xxx / 01 xxx
+      m = base.match(/^(\d+)[\s._-]/);
+      if (m) return parseInt(m[1], 10);
+
+      // 纯数字 01 / 1
+      m = base.match(/^(\d+)$/);
+      if (m) return parseInt(m[1], 10);
+
+      // 结尾数字 xxx-01
+      m = base.match(/[\s._-](\d+)$/);
+      if (m) return parseInt(m[1], 10);
+
+      return null;
+    }
+
+    /* ================= 匹配 ================= */
+    function makeChapter(zh, en, matchType) {
+      const basename = (zh?.basename || en?.basename || '').replace(/\.md$/i, '');
+      const zhTitle = zh ? extractTitle(zh.content, basename) : '';
+      const enTitle = en ? extractTitle(en.content, basename) : '';
+      return {
+        id: basename,
+        basename,
+        zh: zh ? zh.path : '',
+        en: en ? en.path : '',
+        zhBasename: zh ? zh.basename : '',
+        enBasename: en ? en.basename : '',
+        titleZh: zhTitle || enTitle || basename,
+        titleEn: enTitle || zhTitle || basename,
+        matchType,
+        hasZh: !!zh,
+        hasEn: !!en,
+      };
+    }
+
+    function matchChapters(zhFiles, enFiles) {
+      const chapters = [];
+      let remainingZh = [...zhFiles];
+      let remainingEn = [...enFiles];
+
+      // 1. 精确 basename 匹配
+      const stillZh = [];
+      for (const zh of remainingZh) {
+        const idx = remainingEn.findIndex((e) => e.basename === zh.basename);
+        if (idx >= 0) {
+          const en = remainingEn[idx];
+          remainingEn.splice(idx, 1);
+          chapters.push(makeChapter(zh, en, 'exact'));
+        } else {
+          stillZh.push(zh);
+        }
+      }
+
+      // 2. 序号匹配（仅当序号在两边各自唯一时）
+      const zhOrderCount = new Map();
+      for (const zh of stillZh) {
+        const o = extractOrder(zh.basename);
+        if (o !== null) zhOrderCount.set(o, (zhOrderCount.get(o) || 0) + 1);
+      }
+      const enOrderCount = new Map();
+      for (const en of remainingEn) {
+        const o = extractOrder(en.basename);
+        if (o !== null) enOrderCount.set(o, (enOrderCount.get(o) || 0) + 1);
+      }
+
+      const stillZh2 = [];
+      for (const zh of stillZh) {
+        const o = extractOrder(zh.basename);
+        if (o === null || zhOrderCount.get(o) > 1) {
+          stillZh2.push(zh);
+          continue;
+        }
+        const candidates = remainingEn.filter((e) => {
+          const eo = extractOrder(e.basename);
+          return eo === o && enOrderCount.get(eo) === 1;
+        });
+        if (candidates.length === 1) {
+          const en = candidates[0];
+          remainingEn.splice(remainingEn.indexOf(en), 1);
+          chapters.push(makeChapter(zh, en, 'order'));
+        } else if (candidates.length > 1) {
+          const ch = makeChapter(zh, null, 'conflict');
+          ch.candidates = candidates;
+          chapters.push(ch);
+        } else {
+          stillZh2.push(zh);
+        }
+      }
+
+      // 3. 顺序配对（两边排序后逐一对应）
+      stillZh2.sort((a, b) => a.basename.localeCompare(b.basename));
+      remainingEn.sort((a, b) => a.basename.localeCompare(b.basename));
+      const pairCount = Math.min(stillZh2.length, remainingEn.length);
+      for (let i = 0; i < pairCount; i++) {
+        chapters.push(makeChapter(stillZh2[i], remainingEn[i], 'sequential'));
+      }
+      for (let i = pairCount; i < stillZh2.length; i++) {
+        chapters.push(makeChapter(stillZh2[i], null, 'zhOnly'));
+      }
+      for (let i = pairCount; i < remainingEn.length; i++) {
+        chapters.push(makeChapter(null, remainingEn[i], 'enOnly'));
+      }
+
+      // 按序号排序
+      chapters.sort((a, b) => {
+        const ao = extractOrder(a.basename);
+        const bo = extractOrder(b.basename);
+        if (ao !== null && bo !== null && ao !== bo) return ao - bo;
+        if (ao !== null && bo === null) return -1;
+        if (ao === null && bo !== null) return 1;
+        return a.basename.localeCompare(b.basename);
+      });
+
+      return chapters;
+    }
+
+    /* ================= 文件读取 ================= */
+    async function readFileList(fileList) {
+      const files = [];
+      let ignored = 0;
+      for (const file of fileList) {
+        const path = file.webkitRelativePath || file.name;
+        if (isIgnoredFile(path)) { ignored++; continue; }
+        if (!isMdFile(path)) continue;
+        files.push({ path, content: await file.text() });
+      }
+      return { files, ignored };
+    }
+
+    function splitZhEn(files) {
+      const zhFiles = [], enFiles = [];
+      const other = [];
       for (const f of files) {
+        const name = f.path.split('/').pop();
+        const basename = name;
         const zh = f.path.match(/(?:^|\/)zh\/([^/]+\.md)$/i);
         const en = f.path.match(/(?:^|\/)en\/([^/]+\.md)$/i);
-        if (zh) zhMap.set(zh[1], f);
-        else if (en) enMap.set(en[1], f);
-        else unknown.push(f);
+        if (zh) zhFiles.push({ basename: zh[1], path: f.path, content: f.content });
+        else if (en) enFiles.push({ basename: en[1], path: f.path, content: f.content });
+        else other.push(f);
       }
-      const allBase = new Set([...zhMap.keys(), ...enMap.keys()]);
-      const chapters = [];
-      for (const basename of Array.from(allBase).sort()) {
-        const zhF = zhMap.get(basename), enF = enMap.get(basename);
-        const id = basename.replace(/\.md$/i, '');
-        chapters.push({
-          id, basename,
-          zh: zhF ? zhF.path : '', en: enF ? enF.path : '',
-          titleZh: zhF ? extractTitle(zhF.content, id) : '',
-          titleEn: enF ? extractTitle(enF.content, id) : '',
-          hasZh: !!zhF, hasEn: !!enF,
-        });
+      return { zhFiles, enFiles, other };
+    }
+
+    /* ================= 主流程 ================= */
+    function processFiles(rawFiles, ignoredCount) {
+      const status = $('#status');
+      state.ignoredCount = ignoredCount;
+      if (!rawFiles.length) {
+        status.className = 'status error';
+        status.textContent = '没有找到可用的 .md 文件。' +
+          (ignoredCount ? `（已忽略 ${ignoredCount} 个系统文件）` : '');
+        return;
       }
-      return { chapters, unknown, zhCount: zhMap.size, enCount: enMap.size };
+      const { zhFiles, enFiles, other } = splitZhEn(rawFiles);
+      state.zhFiles = zhFiles;
+      state.enFiles = enFiles;
+      state.otherFiles = other.length;
+
+      if (!zhFiles.length && !enFiles.length) {
+        status.className = 'status error';
+        status.textContent = '没有在 zh/ 或 en/ 目录下识别到 .md 文件。请检查目录结构，或查看顶部「命名指南」。' +
+          (ignoredCount ? `（已忽略 ${ignoredCount} 个系统文件）` : '');
+        return;
+      }
+
+      state.chapters = matchChapters(zhFiles, enFiles);
+
+      if (!state.bookTitle) {
+        const first = rawFiles[0].path;
+        const parts = first.split('/');
+        state.bookTitle = parts.length > 1 ? parts[0] : '我的书籍';
+        $('#book-title').value = state.bookTitle;
+      }
+      $('#title-wrap').style.display = 'flex';
+      render();
+
+      // 汇总状态
+      const msgs = [];
+      msgs.push(`✓ 中文 ${zhFiles.length} 个，英文 ${enFiles.length} 个，共 ${state.chapters.length} 章。`);
+      if (ignoredCount) msgs.push(`已忽略 ${ignoredCount} 个系统/隐藏文件（._、.DS_Store 等）。`);
+      if (other.length) msgs.push(`⚠ ${other.length} 个 .md 不在 zh/ 或 en/ 下，已忽略。`);
+
+      const exact = state.chapters.filter((c) => c.matchType === 'exact').length;
+      const order = state.chapters.filter((c) => c.matchType === 'order').length;
+      const seq = state.chapters.filter((c) => c.matchType === 'sequential').length;
+      const conflict = state.chapters.filter((c) => c.matchType === 'conflict').length;
+      const zhOnly = state.chapters.filter((c) => c.matchType === 'zhOnly').length;
+      const enOnly = state.chapters.filter((c) => c.matchType === 'enOnly').length;
+
+      const detail = [];
+      if (exact) detail.push(`精确 ${exact}`);
+      if (order) detail.push(`序号 ${order}`);
+      if (seq) detail.push(`顺序 ${seq}`);
+      if (conflict) detail.push(`冲突 ${conflict}`);
+      if (zhOnly) detail.push(`仅中 ${zhOnly}`);
+      if (enOnly) detail.push(`仅英 ${enOnly}`);
+      if (detail.length) msgs.push(`匹配分布：${detail.join(' · ')}`);
+
+      const hasWarn = seq || conflict || zhOnly || enOnly || other.length;
+      if (seq) msgs.push(`⚠ ${seq} 章是顺序配对，请人工核对是否正确（顺序配对只在缺序号信息时启用）。`);
+      if (conflict) msgs.push(`⚠ ${conflict} 章有多个候选项，请在下方下拉框中手动选择。`);
+
+      status.className = 'status' + (hasWarn ? ' warning' : '');
+      status.innerHTML = msgs.join('<br>');
+    }
+
+    /* ================= 渲染表格 ================= */
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[c]);
+    }
+
+    function renderMatchBadge(type) {
+      const map = {
+        exact: { text: '✓ 精确', cls: 'badge-ok' },
+        order: { text: '↔ 序号', cls: 'badge-ok' },
+        sequential: { text: '~ 顺序', cls: 'badge-warn' },
+        conflict: { text: '⚠ 冲突', cls: 'badge-error' },
+        zhOnly: { text: '仅中', cls: 'badge-zh' },
+        enOnly: { text: '仅英', cls: 'badge-en' },
+        manual: { text: '✋ 手动', cls: 'badge-manual' },
+      };
+      const b = map[type] || { text: type, cls: '' };
+      return `<span class="badge ${b.cls}">${b.text}</span>`;
+    }
+
+    function setChapterEn(ch, enFile) {
+      if (enFile) {
+        ch.en = enFile.path;
+        ch.enBasename = enFile.basename;
+        ch.titleEn = extractTitle(enFile.content, ch.basename);
+        ch.hasEn = true;
+        ch.matchType = 'manual';
+      } else {
+        ch.en = '';
+        ch.enBasename = '';
+        ch.hasEn = false;
+        ch.matchType = ch.hasZh ? 'zhOnly' : 'enOnly';
+      }
+      render();
     }
 
     function render() {
-      const { chapters } = state;
-      $('#preview-wrap').innerHTML = '';
-      if (!chapters.length) { $('#download-btn').disabled = true; return; }
+      const wrap = $('#preview-wrap');
+      wrap.innerHTML = '';
+      if (!state.chapters.length) {
+        $('#export-btn').disabled = true;
+        return;
+      }
+      $('#export-btn').disabled = false;
+
       const box = document.createElement('div');
       box.className = 'preview';
+
       const table = document.createElement('table');
       table.innerHTML = `
         <thead><tr>
-          <th style="width:60px">#</th><th style="width:100px">ID</th>
-          <th>中文标题</th><th>English Title</th><th style="width:70px">语言</th>
+          <th class="col-idx">#</th>
+          <th class="col-status">状态</th>
+          <th class="col-id">ID</th>
+          <th class="col-file">中文文件</th>
+          <th class="col-file">英文文件</th>
+          <th>中文标题</th>
+          <th>英文标题</th>
+          <th class="col-actions">操作</th>
         </tr></thead><tbody></tbody>`;
       const tbody = table.querySelector('tbody');
-      chapters.forEach((ch, i) => {
+
+      state.chapters.forEach((ch, i) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${i + 1}</td>`;
-        const idTd = document.createElement('td');
-        const idIn = document.createElement('input');
-        idIn.value = ch.id; idIn.addEventListener('input', () => ch.id = idIn.value);
-        idTd.appendChild(idIn);
-        const zhTd = document.createElement('td');
-        const zhIn = document.createElement('input');
-        zhIn.value = ch.titleZh;
-        zhIn.placeholder = ch.hasZh ? '' : '（无中文文件）';
-        zhIn.addEventListener('input', () => ch.titleZh = zhIn.value);
-        zhTd.appendChild(zhIn);
-        const enTd = document.createElement('td');
-        const enIn = document.createElement('input');
-        enIn.value = ch.titleEn;
-        enIn.placeholder = ch.hasEn ? '' : '（无英文文件）';
-        enIn.addEventListener('input', () => ch.titleEn = enIn.value);
-        enTd.appendChild(enIn);
+
+        // #
+        const idxTd = document.createElement('td');
+        idxTd.className = 'col-idx';
+        idxTd.textContent = i + 1;
+
+        // 状态
         const stTd = document.createElement('td');
-        stTd.innerHTML = ch.hasZh && ch.hasEn
-          ? '<span class="lang-tag">✓ 双语</span>'
-          : ch.hasZh ? '<span class="lang-tag zh">仅中</span>'
-          : '<span class="lang-tag en">仅英</span>';
-        tr.append(idTd, zhTd, enTd, stTd);
+        stTd.className = 'col-status';
+        stTd.innerHTML = renderMatchBadge(ch.matchType);
+
+        // ID
+        const idTd = document.createElement('td');
+        idTd.className = 'col-id';
+        const idIn = document.createElement('input');
+        idIn.value = ch.id;
+        idIn.addEventListener('input', () => { ch.id = idIn.value; });
+        idTd.appendChild(idIn);
+
+        // 中文文件（只读显示）
+        const zhTd = document.createElement('td');
+        zhTd.className = 'col-file';
+        zhTd.innerHTML = ch.zh
+          ? `<span class="file-name" title="${escapeHtml(ch.zh)}">${escapeHtml(ch.zhBasename)}</span>`
+          : '<span class="file-missing">—</span>';
+
+        // 英文文件（下拉）
+        const enTd = document.createElement('td');
+        enTd.className = 'col-file';
+        if (state.enFiles.length) {
+          const sel = document.createElement('select');
+          const emptyOpt = document.createElement('option');
+          emptyOpt.value = '';
+          emptyOpt.textContent = '（无）';
+          sel.appendChild(emptyOpt);
+
+          state.enFiles.forEach((f) => {
+            const opt = document.createElement('option');
+            opt.value = f.path;
+            opt.textContent = f.basename;
+            if (f.path === ch.en) opt.selected = true;
+            sel.appendChild(opt);
+          });
+
+          if (ch.matchType === 'conflict') {
+            sel.value = '';
+            const warnOpt = document.createElement('option');
+            warnOpt.value = '__conflict__';
+            warnOpt.textContent = '⚠ 请选择（多个候选）';
+            warnOpt.disabled = true;
+            sel.insertBefore(warnOpt, sel.children[1]);
+            warnOpt.selected = true;
+          }
+
+          sel.addEventListener('change', () => {
+            if (sel.value === '__conflict__') return;
+            const enFile = state.enFiles.find((f) => f.path === sel.value) || null;
+            setChapterEn(ch, enFile);
+          });
+          enTd.appendChild(sel);
+        } else {
+          enTd.innerHTML = '<span class="file-missing">—</span>';
+        }
+
+        // 中文标题
+        const zhTitleTd = document.createElement('td');
+        const zhTitleIn = document.createElement('input');
+        zhTitleIn.value = ch.titleZh;
+        zhTitleIn.addEventListener('input', () => { ch.titleZh = zhTitleIn.value; });
+        zhTitleTd.appendChild(zhTitleIn);
+
+        // 英文标题
+        const enTitleTd = document.createElement('td');
+        const enTitleIn = document.createElement('input');
+        enTitleIn.value = ch.titleEn;
+        enTitleIn.addEventListener('input', () => { ch.titleEn = enTitleIn.value; });
+        enTitleTd.appendChild(enTitleIn);
+
+        // 操作
+        const actTd = document.createElement('td');
+        actTd.className = 'col-actions';
+        const actWrap = document.createElement('div');
+        actWrap.className = 'row-actions';
+
+        const upBtn = document.createElement('button');
+        upBtn.textContent = '↑';
+        upBtn.title = '上移';
+        upBtn.disabled = i === 0;
+        upBtn.addEventListener('click', () => {
+          [state.chapters[i - 1], state.chapters[i]] = [state.chapters[i], state.chapters[i - 1]];
+          render();
+        });
+
+        const downBtn = document.createElement('button');
+        downBtn.textContent = '↓';
+        downBtn.title = '下移';
+        downBtn.disabled = i === state.chapters.length - 1;
+        downBtn.addEventListener('click', () => {
+          [state.chapters[i + 1], state.chapters[i]] = [state.chapters[i], state.chapters[i + 1]];
+          render();
+        });
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '✕';
+        delBtn.title = '从列表中删除';
+        delBtn.addEventListener('click', () => {
+          state.chapters.splice(i, 1);
+          render();
+        });
+
+        actWrap.append(upBtn, downBtn, delBtn);
+        actTd.appendChild(actWrap);
+
+        tr.append(idxTd, stTd, idTd, zhTd, enTd, zhTitleTd, enTitleTd, actTd);
         tbody.appendChild(tr);
       });
+
       box.appendChild(table);
-      $('#preview-wrap').appendChild(box);
-      $('#download-btn').disabled = false;
+      wrap.appendChild(box);
     }
 
+    /* ================= 生成 manifest ================= */
     function buildManifest() {
       return {
         title: state.bookTitle || '未命名书籍',
@@ -198,83 +736,58 @@
           id: ch.id,
           titleZh: ch.titleZh || ch.titleEn || ch.id,
           titleEn: ch.titleEn || ch.titleZh || ch.id,
-          zh: ch.zh, en: ch.en,
+          zh: ch.zh || '',
+          en: ch.en || '',
         })),
       };
     }
 
-    function processFiles(files) {
-      const status = $('#status');
-      if (!files.length) {
-        status.className = 'status error';
-        status.textContent = '没有找到 .md 文件。';
-        return;
-      }
-      const result = analyze(files);
-      if (!result.chapters.length) {
-        status.className = 'status error';
-        status.textContent = '没有在 zh/ 或 en/ 目录下识别到 .md 文件。请检查目录结构。';
-        return;
-      }
-      state.files = files;
-      state.chapters = result.chapters;
-      if (!state.bookTitle) {
-        const first = files[0].path;
-        const parts = first.split('/');
-        state.bookTitle = parts.length > 1 ? parts[0] : '我的书籍';
-        $('#book-title').value = state.bookTitle;
-      }
-      $('#title-wrap').style.display = 'flex';
-      const msgs = [`✓ 识别到 ${result.zhCount} 个中文、${result.enCount} 个英文，共 ${result.chapters.length} 章。`];
-      if (result.unknown.length) msgs.push(`⚠ ${result.unknown.length} 个 md 不在 zh/ 或 en/ 下，已忽略。`);
-      const single = result.chapters.filter(c => !c.hasZh || !c.hasEn).length;
-      if (single) msgs.push(`⚠ ${single} 章只有单一语言。`);
-      status.className = 'status' + (single || result.unknown.length ? ' warning' : '');
-      status.textContent = msgs.join(' ');
-      render();
-    }
-
-    async function readFileList(fileList) {
-      const files = [];
-      for (const file of fileList) {
-        if (!file.name.endsWith('.md')) continue;
-        files.push({ path: file.webkitRelativePath || file.name, content: await file.text() });
-      }
-      return files;
-    }
-
+    /* ================= 事件绑定 ================= */
     $('#folder-input').addEventListener('change', async (e) => {
-      processFiles(await readFileList(e.target.files));
+      const { files, ignored } = await readFileList(e.target.files);
+      e.target.value = '';
+      processFiles(files, ignored);
     });
-    $('#files-input').addEventListener('change', async (e) => {
-      processFiles(await readFileList(e.target.files));
-    });
-    $('#book-title').addEventListener('input', (e) => state.bookTitle = e.target.value);
 
-    $('#download-btn').addEventListener('click', () => {
+    $('#files-input').addEventListener('change', async (e) => {
+      const { files, ignored } = await readFileList(e.target.files);
+      e.target.value = '';
+      processFiles(files, ignored);
+    });
+
+    $('#book-title').addEventListener('input', (e) => { state.bookTitle = e.target.value; });
+
+    $('#export-btn').addEventListener('click', () => {
       const blob = new Blob([JSON.stringify(buildManifest(), null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = 'manifest.json'; a.click();
+      a.href = url;
+      a.download = 'manifest.json';
+      a.click();
       URL.revokeObjectURL(url);
     });
 
     // 拖拽
     const dz = $('#drop-zone');
-    ['dragenter', 'dragover'].forEach(ev =>
+    ['dragenter', 'dragover'].forEach((ev) =>
       dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('dragover'); }));
-    ['dragleave', 'drop'].forEach(ev =>
+    ['dragleave', 'drop'].forEach((ev) =>
       dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('dragover'); }));
+
     dz.addEventListener('drop', async (e) => {
       const items = e.dataTransfer.items;
       if (!items) return;
       const files = [];
+      let ignored = 0;
+
       async function walk(entry, prefix) {
         if (entry.isFile) {
           return new Promise((resolve) => {
             entry.file(async (file) => {
-              if (file.name.endsWith('.md')) {
-                files.push({ path: prefix + file.name, content: await file.text() });
+              const path = prefix + file.name;
+              if (isIgnoredFile(path)) { ignored++; resolve(); return; }
+              if (isMdFile(path)) {
+                files.push({ path, content: await file.text() });
               }
               resolve();
             });
@@ -286,11 +799,12 @@
           for (const en of entries) await walk(en, prefix + entry.name + '/');
         }
       }
+
       for (let i = 0; i < items.length; i++) {
         const entry = items[i].webkitGetAsEntry && items[i].webkitGetAsEntry();
         if (entry) await walk(entry, '');
       }
-      processFiles(files);
+      processFiles(files, ignored);
     });
   </script>
 </body>

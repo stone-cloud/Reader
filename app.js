@@ -122,6 +122,17 @@
         tx.onerror = () => rej(tx.error);
       });
     }
+    async bulkDelete(store, keys) {
+      if (!keys.length) return;
+      const db = await this.open();
+      return new Promise((res, rej) => {
+        const tx = db.transaction(store, 'readwrite');
+        const s = tx.objectStore(store);
+        keys.forEach((k) => s.delete(k));
+        tx.oncomplete = () => res();
+        tx.onerror = () => rej(tx.error);
+      });
+    }
   }
   const db = new DB();
 
@@ -153,6 +164,7 @@
     });
     state.books = all;
     renderBookSelect();
+    updateDeleteBookButton();
   }
 
   function renderBookSelect() {
@@ -167,6 +179,61 @@
     if (state.currentBookId) sel.value = state.currentBookId;
   }
 
+  function updateDeleteBookButton() {
+    const btn = $('#delete-book');
+    const book = state.books.find((b) => b.id === state.currentBookId);
+    if (!book) { btn.disabled = true; btn.title = '无选中书籍'; return; }
+    if (book.isBuiltin) {
+      btn.disabled = true;
+      btn.title = '内置书籍不可删除';
+    } else {
+      btn.disabled = false;
+      btn.title = `删除「${book.title}」`;
+    }
+  }
+
+  async function deleteCurrentBook() {
+    const book = state.books.find((b) => b.id === state.currentBookId);
+    if (!book) return;
+    if (book.isBuiltin) { showToast('内置书籍不可删除', 'error'); return; }
+
+    // 统计要删的东西
+    const allFiles = await db.getAll('bookFiles');
+    const fileKeys = allFiles.filter((f) => f.bookId === book.id).map((f) => f.key);
+    const allNotes = await db.getAll('notes');
+    const noteIds = allNotes.filter((n) => n.bookId === book.id).map((n) => n.id);
+
+    const msg =
+      `确认删除书籍「${book.title}」？\n\n` +
+      `将同时删除：\n` +
+      `· ${book.chapters.length} 章内容\n` +
+      `· ${noteIds.length} 条笔记\n\n` +
+      `此操作不可撤销。`;
+    if (!confirm(msg)) return;
+
+    try {
+      await db.delete('books', book.id);
+      await db.bulkDelete('bookFiles', fileKeys);
+      await db.bulkDelete('notes', noteIds);
+
+      await loadBooks();
+      await loadNotes();
+
+      // 删的是当前书 → 切回内置书
+      if (state.currentBookId === book.id) {
+        const builtin = state.books.find((b) => b.isBuiltin);
+        if (builtin) await switchBook(builtin.id);
+      }
+
+      refreshNotesUI();
+      applyHighlights();
+      showToast(`✓ 已删除「${book.title}」及 ${noteIds.length} 条笔记`);
+    } catch (e) {
+      console.error(e);
+      showToast('删除失败：' + e.message, 'error');
+    }
+  }
+
   async function switchBook(bookId) {
     const book = state.books.find((b) => b.id === bookId);
     if (!book) return;
@@ -176,6 +243,7 @@
     state.selectedNoteIds.clear();
     localStorage.setItem('fde-last-book', bookId);
     $('#book-select').value = bookId;
+    updateDeleteBookButton();
 
     const cSel = $('#chapter-select');
     cSel.innerHTML = '';
@@ -767,7 +835,7 @@
     if (!ids.length) return;
     if (!confirm(`确认删除选中的 ${ids.length} 条笔记？此操作不可撤销。`)) return;
     try {
-      for (const id of ids) await db.delete('notes', id);
+      await db.bulkDelete('notes', ids);
       state.selectedNoteIds.clear();
       await loadNotes();
       refreshNotesUI(); applyHighlights();
@@ -804,6 +872,7 @@
     $('#upload-preview').innerHTML = '';
     $('#upload-title-wrap').style.display = 'none';
     $('#upload-confirm').disabled = true;
+    $('#upload-export').disabled = true;
     $('#upload-title').value = '';
   }
 
@@ -837,31 +906,18 @@
 
   async function handleUploadFiles(files) {
     const status = $('#upload-status');
-    if (!files.length) {
-      status.className = 'upload-status error';
-      status.textContent = '没有找到文件';
-      return;
-    }
+    if (!files.length) { status.className = 'upload-status error'; status.textContent = '没有找到文件'; return; }
 
     const mdFiles = files.filter((f) => f.path.endsWith('.md'));
     const manifestFile = files.find((f) => f.path.endsWith('manifest.json'));
 
-    if (!mdFiles.length) {
-      status.className = 'upload-status error';
-      status.textContent = '没有找到任何 .md 文件';
-      return;
-    }
+    if (!mdFiles.length) { status.className = 'upload-status error'; status.textContent = '没有找到任何 .md 文件'; return; }
 
     let manifest, rootPrefix = '';
 
     if (manifestFile) {
       try { manifest = JSON.parse(manifestFile.content); }
-      catch (e) {
-        status.className = 'upload-status error';
-        status.textContent = 'manifest.json 解析失败：' + e.message;
-        return;
-      }
-      // 推断根前缀（manifest 所在位置相对于书根）
+      catch (e) { status.className = 'upload-status error'; status.textContent = 'manifest.json 解析失败：' + e.message; return; }
       if (manifestFile.path.endsWith('content/manifest.json')) {
         rootPrefix = manifestFile.path.slice(0, -'content/manifest.json'.length);
       } else if (manifestFile.path.endsWith('/manifest.json')) {
@@ -869,15 +925,9 @@
       } else if (manifestFile.path === 'manifest.json') {
         rootPrefix = '';
       }
-      // manifest 里的路径是相对书根，直接使用；文件存的时候要剥掉 rootPrefix
     } else {
       const chapters = analyzeFilesForUpload(mdFiles);
-      if (!chapters.length) {
-        status.className = 'upload-status error';
-        status.textContent = '没有在 zh/ 或 en/ 目录下找到 .md 文件，也没有 manifest.json';
-        return;
-      }
-      // 推断根前缀
+      if (!chapters.length) { status.className = 'upload-status error'; status.textContent = '没有在 zh/ 或 en/ 目录下找到 .md 文件，也没有 manifest.json'; return; }
       const sample = mdFiles.find((f) => /(?:^|\/)zh\/[^/]+\.md$/i.test(f.path));
       if (sample) {
         const m = sample.path.match(/^(.*?)(?:content\/)?zh\//i);
@@ -890,36 +940,112 @@
     uploadData.chapters = manifest.chapters;
     uploadData.rootPrefix = rootPrefix;
 
-    // 书名默认值
     let defaultTitle = manifest.title || '';
-    if (!defaultTitle && rootPrefix) {
-      defaultTitle = rootPrefix.replace(/\/$/, '').split('/').pop();
-    }
+    if (!defaultTitle && rootPrefix) defaultTitle = rootPrefix.replace(/\/$/, '').split('/').pop();
     if (!defaultTitle) defaultTitle = '导入的书籍';
     uploadData.title = defaultTitle;
     $('#upload-title').value = defaultTitle;
     $('#upload-title-wrap').style.display = 'flex';
 
-    // 预览
-    const prev = $('#upload-preview');
-    prev.innerHTML = '';
-    const ul = document.createElement('ul');
-    manifest.chapters.slice(0, 20).forEach((ch, i) => {
-      const li = document.createElement('li');
-      li.textContent = `${i + 1}. ${ch.titleZh || ch.id} / ${ch.titleEn || ch.id}`;
-      ul.appendChild(li);
-    });
-    if (manifest.chapters.length > 20) {
-      const li = document.createElement('li');
-      li.style.color = 'var(--text-secondary)';
-      li.textContent = `... 还有 ${manifest.chapters.length - 20} 章`;
-      ul.appendChild(li);
-    }
-    prev.appendChild(ul);
+    renderUploadTable();
+    $('#upload-export').disabled = false;
+    $('#upload-confirm').disabled = false;
 
     status.className = 'upload-status success';
-    status.textContent = `✓ 共 ${manifest.chapters.length} 章，${mdFiles.length} 个 md 文件`;
-    $('#upload-confirm').disabled = false;
+    status.textContent = `✓ 共 ${manifest.chapters.length} 章，${mdFiles.length} 个 md 文件。可修改下方表格中的 ID、标题、顺序。`;
+  }
+
+  function renderUploadTable() {
+    const wrap = $('#upload-preview');
+    wrap.innerHTML = '';
+    const chapters = uploadData.chapters || [];
+    if (!chapters.length) return;
+
+    const table = document.createElement('table');
+    table.innerHTML = `<thead><tr>
+      <th style="width:36px">#</th>
+      <th style="width:110px">ID</th>
+      <th>中文标题</th>
+      <th>English Title</th>
+      <th style="width:60px">语言</th>
+      <th style="width:110px">操作</th>
+    </tr></thead><tbody></tbody>`;
+    const tbody = table.querySelector('tbody');
+
+    chapters.forEach((ch, i) => {
+      const tr = document.createElement('tr');
+      const idxTd = document.createElement('td');
+      idxTd.textContent = i + 1;
+
+      const idTd = document.createElement('td');
+      const idIn = document.createElement('input');
+      idIn.value = ch.id;
+      idIn.addEventListener('input', () => { ch.id = idIn.value; });
+      idTd.appendChild(idIn);
+
+      const zhTd = document.createElement('td');
+      const zhIn = document.createElement('input');
+      zhIn.value = ch.titleZh || '';
+      zhIn.placeholder = ch.zh ? '' : '（无中文文件）';
+      zhIn.addEventListener('input', () => { ch.titleZh = zhIn.value; });
+      zhTd.appendChild(zhIn);
+
+      const enTd = document.createElement('td');
+      const enIn = document.createElement('input');
+      enIn.value = ch.titleEn || '';
+      enIn.placeholder = ch.en ? '' : '（无英文文件）';
+      enIn.addEventListener('input', () => { ch.titleEn = enIn.value; });
+      enTd.appendChild(enIn);
+
+      const stTd = document.createElement('td');
+      stTd.textContent = (ch.zh && ch.en) ? '✓ 双语' : ch.zh ? '仅中' : '仅英';
+
+      const actTd = document.createElement('td');
+      const actWrap = document.createElement('div');
+      actWrap.className = 'upload-row-actions';
+
+      const upBtn = document.createElement('button');
+      upBtn.textContent = '↑'; upBtn.title = '上移'; upBtn.disabled = i === 0;
+      upBtn.addEventListener('click', () => { [chapters[i - 1], chapters[i]] = [chapters[i], chapters[i - 1]]; renderUploadTable(); });
+
+      const downBtn = document.createElement('button');
+      downBtn.textContent = '↓'; downBtn.title = '下移'; downBtn.disabled = i === chapters.length - 1;
+      downBtn.addEventListener('click', () => { [chapters[i + 1], chapters[i]] = [chapters[i], chapters[i + 1]]; renderUploadTable(); });
+
+      const delBtn = document.createElement('button');
+      delBtn.textContent = '✕'; delBtn.title = '删除此章';
+      delBtn.addEventListener('click', () => { chapters.splice(i, 1); renderUploadTable(); });
+
+      actWrap.append(upBtn, downBtn, delBtn);
+      actTd.appendChild(actWrap);
+
+      tr.append(idxTd, idTd, zhTd, enTd, stTd, actTd);
+      tbody.appendChild(tr);
+    });
+    wrap.appendChild(table);
+  }
+
+  function exportUploadManifest() {
+    if (!uploadData.chapters || !uploadData.chapters.length) return;
+    const title = ($('#upload-title').value || uploadData.title || '未命名书籍').trim();
+    const manifest = {
+      title,
+      chapters: uploadData.chapters.map((ch) => ({
+        id: ch.id,
+        titleZh: ch.titleZh || ch.id,
+        titleEn: ch.titleEn || ch.id,
+        zh: ch.zh || '',
+        en: ch.en || '',
+      })),
+    };
+    const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'manifest.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('✓ 已导出 manifest.json');
   }
 
   async function readZip(file) {
@@ -929,6 +1055,8 @@
     const entries = Object.entries(zip.files);
     for (const [path, entry] of entries) {
       if (entry.dir) continue;
+      const name = path.split('/').pop();
+      if (name.startsWith('._') || name === '.DS_Store' || name === '.Thumbs.db' || name.startsWith('.')) continue;
       if (!path.endsWith('.md') && !path.endsWith('manifest.json')) continue;
       files.push({ path, content: await entry.async('text') });
     }
@@ -938,6 +1066,7 @@
   async function readFolder(fileList) {
     const files = [];
     for (const f of fileList) {
+      if (f.name.startsWith('._') || f.name === '.DS_Store' || f.name === '.Thumbs.db' || f.name.startsWith('.')) continue;
       if (!f.name.endsWith('.md') && !f.name.endsWith('manifest.json')) continue;
       const path = f.webkitRelativePath || f.name;
       files.push({ path, content: await f.text() });
@@ -985,28 +1114,25 @@
     }
   });
 
+  $('#upload-export').addEventListener('click', exportUploadManifest);
+
   $('#upload-confirm').addEventListener('click', async () => {
     if (!uploadData.chapters || !uploadData.files.length) return;
     const title = ($('#upload-title').value || uploadData.title || '导入的书籍').trim();
     try {
       const bookId = 'b-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
       const book = {
-        id: bookId,
-        title,
+        id: bookId, title,
         isBuiltin: false,
         chapters: uploadData.chapters,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: Date.now(), updatedAt: Date.now(),
       };
-
-      // 存文件（剥掉 rootPrefix），跳过 manifest.json
       const toSave = [];
       for (const f of uploadData.files) {
         if (f.path.endsWith('manifest.json')) continue;
         const rel = stripPrefix(f.path, uploadData.rootPrefix);
         toSave.push({ key: `${bookId}/${rel}`, bookId, path: rel, content: f.content });
       }
-
       await db.put('books', book);
       if (toSave.length) await db.bulkPut('bookFiles', toSave);
 
@@ -1024,6 +1150,7 @@
 
   $('#book-select').addEventListener('change', (e) => switchBook(e.target.value));
   $('#chapter-select').addEventListener('change', (e) => loadChapter(e.target.value));
+  $('#delete-book').addEventListener('click', () => deleteCurrentBook());
 
   /* ================= 面板 & 导入导出 ================= */
   $('#toggle-notes').addEventListener('click', () => {

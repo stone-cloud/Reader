@@ -380,3 +380,65 @@ select {
   border: 1px solid var(--border); border-radius: 4px;
   color: var(--text); font-family: inherit; font-size: 13px;
 }
+/* ===== v4.1: 上传 manifest 编辑表格 ===== */
+.upload-preview {
+  max-height: 340px;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.upload-preview:empty { display: none; }
+.upload-preview table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.upload-preview th,
+.upload-preview td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.upload-preview th {
+  background: var(--bg);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.upload-preview input {
+  width: 100%;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+}
+.upload-preview input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.upload-row-actions {
+  display: flex;
+  gap: 4px;
+}
+.upload-row-actions button {
+  padding: 2px 6px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.upload-row-actions button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.upload-row-actions button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
