@@ -13,25 +13,32 @@
 <body>
   <header class="toolbar">
     <div class="toolbar-left">
-      <button id="toggle-nav" class="icon-btn" title="目录">☰</button>
-      <select id="book-select" title="切换书籍"></select>
-      <button id="refresh-book" class="icon-btn" title="重新加载内置书" disabled>🔄</button>
-      <button id="delete-book" class="icon-btn danger" title="删除当前书籍" disabled>🗑</button>
-      <select id="chapter-select"></select>
+      <button id="toggle-nav" class="icon-btn" data-i18n-title="toolbar.toggle-nav" title="目录">☰</button>
+      <select id="book-select" data-i18n-title="toolbar.book-select" title="切换书籍"></select>
+      <button id="open-library" class="icon-btn" data-i18n-title="toolbar.library" title="书库管理">🗂️</button>
+      <select id="chapter-select" data-i18n-title="toolbar.chapter-select" title="切换章节"></select>
     </div>
     <div class="toolbar-center">
       <div class="view-switch">
-        <button data-view="zh">中文</button>
-        <button data-view="en">English</button>
-        <button data-view="both" class="active">对照</button>
+        <button data-view="zh" data-i18n="toolbar.view-zh">中文</button>
+        <button data-view="en" data-i18n="toolbar.view-en">English</button>
+        <button data-view="both" class="active" data-i18n="toolbar.view-both">对照</button>
       </div>
     </div>
     <div class="toolbar-right">
-      <button id="font-dec" class="icon-btn" title="减小字号">A-</button>
-      <button id="font-inc" class="icon-btn" title="增大字号">A+</button>
-      <button id="theme-toggle" class="icon-btn" title="切换主题">🌓</button>
-      <button id="upload-book" class="icon-btn" title="上传书籍">📚+</button>
-      <button id="toggle-notes" class="icon-btn" title="笔记">📝</button>
+      <select id="language-select" class="lang-select" data-i18n-title="toolbar.language" title="切换语言">
+        <option value="zh">简体中文</option>
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+      </select>
+      <button id="font-dec" class="icon-btn" data-i18n-title="toolbar.font-dec" title="减小字号">A-</button>
+      <button id="font-inc" class="icon-btn" data-i18n-title="toolbar.font-inc" title="增大字号">A+</button>
+      <button id="theme-toggle" class="icon-btn" data-i18n-title="toolbar.theme" title="切换主题">🌓</button>
+      <button id="upload-book" class="icon-btn" data-i18n-title="toolbar.upload" title="上传书籍">📥</button>
+      <button id="toggle-notes" class="icon-btn" data-i18n-title="toolbar.notes" title="笔记">
+        📝<span id="backup-badge" class="backup-badge" style="display:none;"></span>
+      </button>
     </div>
     <div id="reading-progress" class="reading-progress">
       <div id="reading-progress-bar" class="reading-progress-bar"></div>
@@ -40,7 +47,7 @@
 
   <main class="layout">
     <aside id="nav-panel" class="nav-panel">
-      <div class="nav-title">目录</div>
+      <div class="nav-title" data-i18n="toolbar.toggle-nav">目录</div>
       <ul id="toc-list"></ul>
     </aside>
     <section class="content">
@@ -49,76 +56,86 @@
     </section>
     <aside id="notes-panel" class="notes-panel hidden">
       <div class="notes-header">
-        <span>笔记</span>
+        <span data-i18n="notes.title">笔记</span>
         <div class="notes-header-actions">
-          <label class="select-all-label" title="全选当前筛选">
-            <input type="checkbox" id="select-all-notes"><span>全选</span>
+          <label class="select-all-label" data-i18n-title="notes.tip-select-all">
+            <input type="checkbox" id="select-all-notes"><span data-i18n="notes.select-all">全选</span>
           </label>
-          <button id="batch-delete-notes" class="icon-btn danger" title="删除选中" disabled>🗑</button>
-          <button id="export-notes" class="icon-btn" title="导出">⬇</button>
-          <button id="import-notes-btn" class="icon-btn" title="导入">⬆</button>
+          <button id="batch-delete-notes" class="icon-btn danger" data-i18n="notes.batch-delete" data-i18n-title="notes.batch-delete" disabled>删除选中</button>
+          <button id="export-notes" class="icon-btn" data-i18n-title="notes.export" title="导出笔记 JSON">⬇</button>
+          <button id="import-notes-btn" class="icon-btn" data-i18n-title="notes.import" title="导入笔记 JSON">⬆</button>
           <input type="file" id="import-notes-input" accept=".json" hidden>
+          <button id="backup-all" class="icon-btn" data-i18n-title="notes.backup" title="完整备份">💾</button>
+          <button id="restore-all-btn" class="icon-btn" data-i18n-title="notes.restore" title="从备份恢复">📥</button>
+          <input type="file" id="restore-all-input" accept=".zip" hidden>
           <button id="close-notes" class="icon-btn">✕</button>
         </div>
       </div>
+      <div id="backup-hint" class="backup-hint" style="display:none;"></div>
       <div id="tag-filter" class="tag-filter"></div>
       <ul id="notes-list"></ul>
     </aside>
   </main>
 
   <div id="selection-toolbar" class="selection-toolbar hidden">
-    <button data-action="highlight">高亮</button>
-    <button data-action="note">记笔记</button>
+    <button data-action="highlight" data-i18n="selection.highlight">高亮</button>
+    <button data-action="note" data-i18n="selection.note">记笔记</button>
   </div>
 
   <div id="note-dialog" class="modal hidden">
     <div class="modal-content">
-      <div class="modal-title">添加笔记</div>
+      <div class="modal-title" data-i18n="note-dialog.title">添加笔记</div>
       <blockquote id="note-quote" class="note-quote"></blockquote>
       <div class="tag-editor" id="note-tags-editor"></div>
-      <input type="text" id="note-tag-input" placeholder="输入标签后按回车添加">
+      <input type="text" id="note-tag-input" data-i18n-placeholder="note-dialog.tags-placeholder" placeholder="输入标签后按回车添加">
       <div id="note-tag-suggestions" class="tag-suggestions"></div>
-      <textarea id="note-input" placeholder="写下你的想法..."></textarea>
+      <textarea id="note-input" data-i18n-placeholder="note-dialog.note-placeholder" placeholder="写下你的想法..."></textarea>
       <div class="modal-actions">
-        <button id="note-cancel">取消</button>
-        <button id="note-save" class="primary">保存</button>
+        <button id="note-cancel" data-i18n="note-dialog.cancel">取消</button>
+        <button id="note-save" class="primary" data-i18n="note-dialog.save">保存</button>
       </div>
     </div>
   </div>
 
-<div id="upload-dialog" class="modal hidden">
-  <div class="modal-content" style="max-width: 920px;">
-    <div class="modal-title">上传书籍</div>
-    <p class="upload-hint">
-      · <strong>zip 文件</strong>：把书籍文件夹压缩成 zip 后上传<br>
-      · <strong>选择文件夹</strong>：直接选中包含 <code>zh/</code> 和 <code>en/</code> 子目录的文件夹<br>
-      如已有 <code>manifest.json</code> 会直接使用，没有则自动根据 zh/ en/ 目录生成。<br>
-      <strong>生成结果可在下方表格中直接修改</strong>，也能点「导出 manifest.json」下载检查。
-    </p>
-    <div class="upload-source">
-      <label class="upload-btn">
-        <input type="file" id="upload-zip-input" accept=".zip" hidden>
-        📦 选择 zip 文件
-      </label>
-      <label class="upload-btn">
-        <input type="file" id="upload-folder-input" webkitdirectory directory multiple hidden>
-        📁 选择文件夹
-      </label>
-    </div>
-    <div id="upload-status" class="upload-status"></div>
-    <div id="upload-preview" class="upload-preview"></div>
-    <div id="upload-title-wrap" style="display: none;">
-      <label>书名：</label>
-      <input type="text" id="upload-title" placeholder="书籍名称">
-    </div>
-    <div class="modal-actions">
-      <button id="upload-export" class="icon-btn" style="margin-right: auto;" disabled>⬇ 导出 manifest.json</button>
-      <button id="upload-cancel">取消</button>
-      <button id="upload-confirm" class="primary" disabled>导入</button>
+  <div id="library-dialog" class="modal hidden">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="modal-title" data-i18n="library.title">书库管理</div>
+      <p class="upload-hint" data-i18n-html="library.desc"></p>
+      <div id="library-status" class="upload-status"></div>
+      <div id="library-list" class="upload-books-list"></div>
+      <div class="modal-actions">
+        <button id="library-export" class="icon-btn" style="margin-right: auto;" data-i18n="library.export-empty" disabled>⬇ 导出选中为仓库包</button>
+        <button id="library-delete" class="icon-btn danger" style="margin-right: auto;" data-i18n="library.delete-empty" disabled>🗑 删除选中</button>
+        <button id="library-close" data-i18n="library.close">关闭</button>
+      </div>
     </div>
   </div>
-</div>
 
+  <div id="upload-dialog" class="modal hidden">
+    <div class="modal-content" style="max-width: 1000px;">
+      <div class="modal-title" data-i18n="upload.title">上传书籍</div>
+      <p class="upload-hint" data-i18n-html="upload.desc"></p>
+      <div class="upload-source">
+        <label class="upload-btn">
+          <input type="file" id="upload-zip-input" accept=".zip" multiple hidden>
+          <span data-i18n="upload.select-zip">📦 选择 zip（可多选）</span>
+        </label>
+        <label class="upload-btn">
+          <input type="file" id="upload-folder-input" webkitdirectory directory multiple hidden>
+          <span data-i18n="upload.select-folder">📁 选择父文件夹</span>
+        </label>
+      </div>
+      <div id="upload-status" class="upload-status"></div>
+      <div id="upload-books-list" class="upload-books-list"></div>
+      <div class="modal-actions">
+        <button id="upload-export-zip" class="icon-btn" style="margin-right: auto;" data-i18n="upload.export" disabled>⬇ 立即导出为仓库包</button>
+        <button id="upload-cancel" data-i18n="upload.cancel">取消</button>
+        <button id="upload-import-db" class="primary" data-i18n="upload.preview" disabled>临时预览</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

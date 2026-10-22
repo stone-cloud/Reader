@@ -155,7 +155,7 @@ select {
   .nav-panel { position: fixed; left: 0; top: var(--toolbar-h); bottom: 0; z-index: 90; }
   .notes-panel { position: fixed; right: 0; top: var(--toolbar-h); bottom: 0; z-index: 90; }
 }
-::highlight(fde-note) {
+::highlight(reader-note) {
   background-color: var(--highlight);
   color: inherit;
 }
@@ -442,3 +442,100 @@ select {
   opacity: 0.3;
   cursor: not-allowed;
 }
+/* ===== v0.0.5: 备份提醒 ===== */
+#toggle-notes { position: relative; }
+.backup-badge {
+  position: absolute;
+  top: 3px; right: 3px;
+  width: 7px; height: 7px;
+  background: #dc2626;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.backup-hint {
+  padding: 8px 12px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12px;
+  line-height: 1.5;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ===== v0.0.5: 多书上传列表 ===== */
+.upload-books-list {
+  max-height: 420px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.upload-books-list:empty { display: none; }
+.upload-book-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+.upload-book-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.upload-book-card-header input[type="checkbox"] {
+  flex-shrink: 0; cursor: pointer;
+}
+.upload-book-title {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 500;
+}
+.upload-book-title:focus { outline: none; border-color: var(--accent); }
+.upload-book-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.upload-book-toggle {
+  font-size: 11px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.upload-book-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.upload-book-chapters {
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  max-height: 140px;
+  overflow-y: auto;
+}
+.upload-book-chapters ol {
+  margin: 0; padding-left: 20px;
+}
+.upload-book-chapters li { padding: 1px 0; }
+/* ===== v0.0.6: 语言选择器 ===== */
+.lang-select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  max-width: 110px;
+}
+.lang-select:focus { outline: none; border-color: var(--accent); }
