@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reader 数据库迁移 / 回滚工具</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --bg: #ffffff; --bg-secondary: #f7f7f8; --text: #222; --text-secondary: #666;
+      --border: #e0e0e0; --accent: #3b82f6; --danger: #dc2626; --ok: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 32px 20px;
+      background: var(--bg-secondary); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 14px; line-height: 1.7;
+    }
+    main { max-width: 820px; margin: 0 auto; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    h2 { font-size: 16px; margin: 28px 0 10px; }
+    p { margin: 6px 0; }
+    .muted { color: var(--text-secondary); font-size: 13px; }
+    .card {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px 20px; margin-top: 16px;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    button {
+      padding: 6px 14px; border-radius: 5px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text); cursor: pointer; font-size: 13px;
+      font-family: inherit;
+    }
+    button:hover { border-color: var(--accent); color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.danger { color: var(--danger); border-color: var(--danger); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+    th { background: var(--bg-secondary); font-weight: 600; }
+    code { background: var(--bg-secondary); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+    pre {
+      background: var(--bg-secondary); padding: 12px; border-radius: 6px;
+      overflow-x: auto; font-size: 12px; line-height: 1.6;
+    }
+    #status { margin-top: 12px; font-size: 13px; min-height: 20px; }
+    #status.error { color: var(--danger); }
+    #status.ok { color: var(--ok); }
+    .warn { background: #fef3c7; color: #92400e; border-radius: 6px; padding: 10px 14px; font-size: 13px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Reader 数据库迁移 / 回滚工具</h1>
+  <p class="muted">
+    本页用于检查 / 备份 / 清理浏览器 IndexedDB 数据，配合 CHANGELOG 中的「升级 / 回滚」步骤使用。
+    工具直接操作本机浏览器存储，不会上传任何数据。
+  </p>
+
+  <div class="card">
+    <h2 style="margin-top:0">v0.0.6 数据库（reader-db）</h2>
+    <div id="new-db-info" class="muted">正在读取…</div>
+    <div id="new-db-table"></div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">旧版数据库（fde-reader，仅用于识别旧数据）</h2>
+    <div id="legacy-db-info" class="muted">正在检查…</div>
+    <div class="actions">
+      <button id="btn-refresh">🔄 刷新</button>
+      <button id="btn-snapshot">⬇ 导出快照 JSON（不含二进制）</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">升级 / 回滚</h2>
+    <div class="warn">
+      ⚠️ 回滚到 v0.0.5 前请先做完整备份（阅读器里 💾 按钮），并删除 PDF 书籍、恢复默认背景。
+      旧代码无法打开 v3 数据库，直接切回旧版本会报 <code>VersionError</code>，需要执行「删除数据库」后用备份恢复。
+    </div>
+    <div class="actions">
+      <button id="btn-clean-pdf" class="danger">🧹 清理全部 PDF 书籍与二进制</button>
+      <button id="btn-clean-bg" class="danger">🧹 清除自定义背景</button>
+      <button id="btn-delete-db" class="danger">🗑 删除数据库（危险）</button>
+    </div>
+    <div id="status"></div>
+    <pre id="steps">回滚步骤（与 CHANGELOG 一致）：
+1. 在 v0.0.6 阅读器中点 💾 做一次完整备份（包含 PDF 与背景图）。
+2. 在「书库管理」删除 PDF 书籍；在「外观设置」恢复默认背景（也可用本页清理按钮）。
+3. 把代码切回 v0.0.5 并重新部署。
+4. 本页点「删除数据库」，确认删除 reader-db 与旧库。
+5. 用 v0.0.5 打开站点，从备份恢复笔记 / 书籍（旧版本会自动忽略 pdfs/ 与 assets/ 条目）。</pre>
+  </div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  const DB_NAME = 'reader-db';
+  const DB_VERSION = 3;
+  const STORES = ['notes', 'books', 'bookFiles', 'bookBinary', 'assets'];
+  // 旧版本数据库名，仅用于迁移/回滚识别
+  const LEGACY_DB_NAME = 'fde-reader';
+  const BACKGROUND_ASSET_KEY = 'reading-background';
+
+  const $ = (s) => document.querySelector(s);
+
+  function setStatus(text, kind) {
+    const el = $('#status');
+    el.textContent = text || '';
+    el.className = kind || '';
+  }
+
+  function openDb(name, version) {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(name, version);
+      req.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        ['notes', 'books', 'bookFiles', 'bookBinary', 'assets'].forEach((store) => {
+          if (!db.objectStoreNames.contains(store)) db.createObjectStore(store, { keyPath: store === 'notes' || store === 'books' ? 'id' : 'key' });
+        });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error || new Error('打开数据库失败'));
+      req.onblocked = () => reject(new Error('数据库被其它标签页占用，请关闭其它阅读器页面后重试'));
+    });
+  }
+
+  function getAll(db, store) {
+    return new Promise((resolve) => {
+      try {
+        if (!db.objectStoreNames.contains(store)) { resolve([]); return; }
+        const req = db.transaction(store, 'readonly').objectStore(store).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => resolve([]);
+      } catch (e) { resolve([]); }
+    });
+  }
+
+  function deleteStore(db, store) {
+    return new Promise((resolve) => {
+      try {
+        if (!db.objectStoreNames.contains(store)) { resolve(); return; }
+        const req = db.transaction(store, 'readwrite').objectStore(store).clear();
+        req.onsuccess = () => resolve();
+        req.onerror = () => resolve();
+      } catch (e) { resolve(); }
+    });
+  }
+
+  function databaseExists(name) {
+    if (!indexedDB.databases) return Promise.resolve(false);
+    return indexedDB.databases().then((list) => Array.isArray(list) && list.some((d) => d && d.name === name), () => false);
+  }
+
+  async function render() {
+    setStatus('');
+    let db = null;
+    try {
+      db = await openDb(DB_NAME, DB_VERSION);
+      const rows = [];
+      for (const store of STORES) {
+        const items = await getAll(db, store);
+        let size = 0;
+        items.forEach((item) => {
+          const blob = item && item.blob;
+          if (blob && typeof blob.size === 'number') size += blob.size;
+          else if (typeof (item && item.content) === 'string') size += item.content.length;
+        });
+        rows.push({ store, count: items.length, size });
+      }
+      $('#new-db-info').textContent = '数据库：' + DB_NAME + ' · 版本：' + db.version + ' · 存储：' + (rows.map((r) => r.store).join(', '));
+      $('#new-db-table').innerHTML = '<table><thead><tr><th>object store</th><th>记录数</th><th>数据量（近似）</th></tr></thead><tbody>'
+        + rows.map((r) => '<tr><td><code>' + r.store + '</code></td><td>' + r.count + '</td><td>' + formatBytes(r.size) + '</td></tr>').join('')
+        + '</tbody></table>';
+    } catch (e) {
+      $('#new-db-info').textContent = '读取失败：' + (e && e.message);
+    } finally {
+      if (db) db.close();
+    }
+
+    const legacyExists = await databaseExists(LEGACY_DB_NAME);
+    if (!legacyExists) {
+      $('#legacy-db-info').textContent = '未检测到旧版数据库（无需迁移）。';
+    } else {
+      try {
+        const legacyDb = await openDb(LEGACY_DB_NAME, DB_VERSION);
+        legacyDb.close();
+        $('#legacy-db-info').textContent = '检测到旧版数据库 ' + LEGACY_DB_NAME + '，应用启动时会自动迁移；也可先确认 v0.0.6 数据已迁移，再在本页删除旧库。';
+      } catch (e) {
+        $('#legacy-db-info').textContent = '检测到旧版数据库，但无法读取：' + (e && e.message);
+      }
+    }
+    updateButtons();
+  }
+
+  function formatBytes(n) {
+    const bytes = Number(n) || 0;
+    if (bytes < 1024) return bytes + ' B';
+    const units = ['KB', 'MB', 'GB'];
+    let value = bytes / 1024;
+    let i = 0;
+    while (value >= 1024 && i < units.length - 1) { value /= 1024; i += 1; }
+    return value.toFixed(value < 10 ? 1 : 0) + ' ' + units[i];
+  }
+
+  function updateButtons() {
+    $('#btn-clean-pdf').disabled = false;
+    $('#btn-clean-bg').disabled = false;
+    $('#btn-delete-db').disabled = false;
+  }
+
+  async function snapshot() {
+    try {
+      const db = await openDb(DB_NAME, DB_VERSION);
+      const notes = await getAll(db, 'notes');
+      const books = await getAll(db, 'books');
+      const files = await getAll(db, 'bookFiles');
+      const binary = await getAll(db, 'bookBinary');
+      const assets = await getAll(db, 'assets');
+      db.close();
+      const data = {
+        exportedAt: new Date().toISOString(),
+        appVersion: '0.0.6',
+        notes,
+        books,
+        bookFiles: files.map((f) => ({ key: f.key, bookId: f.bookId, path: f.path, contentLength: (f.content || '').length })),
+        bookBinary: binary.map((f) => ({ key: f.key, bookId: f.bookId, mime: f.mime, size: f.size })),
+        assets: assets.map((a) => ({ key: a.key, mime: a.mime, size: a.size, width: a.width, height: a.height })),
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'reader-db-snapshot-' + new Date().toISOString().slice(0, 10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      setStatus('✓ 已导出快照（二进制内容未包含，请用阅读器 💾 完整备份保存 PDF / 背景）', 'ok');
+    } catch (e) {
+      setStatus('导出失败：' + (e && e.message), 'error');
+    }
+  }
+
+  async function cleanPdf() {
+    if (!confirm('确认删除所有 PDF 书籍及其二进制数据？笔记不会删除。此操作不可撤销。')) return;
+    try {
+      const db = await openDb(DB_NAME, DB_VERSION);
+      const books = await getAll(db, 'books');
+      const pdfBooks = books.filter((b) => b && b.kind === 'pdf');
+      const binary = await getAll(db, 'bookBinary');
+      const keys = binary.map((f) => f.key);
+      await deleteAll(db, 'books', pdfBooks.map((b) => b.id));
+      await deleteAll(db, 'bookBinary', keys);
+      db.close();
+      setStatus('✓ 已删除 ' + pdfBooks.length + ' 本 PDF 书籍、' + keys.length + ' 个二进制文件', 'ok');
+      render();
+    } catch (e) {
+      setStatus('清理失败：' + (e && e.message), 'error');
+    }
+  }
+
+  function deleteAll(db, store, keys) {
+    return new Promise((resolve, reject) => {
+      if (!keys.length || !db.objectStoreNames.contains(store)) { resolve(); return; }
+      try {
+        const tx = db.transaction(store, 'readwrite');
+        const os = tx.objectStore(store);
+        keys.forEach((key) => os.delete(key));
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error || new Error('删除失败'));
+      } catch (e) { reject(e); }
+    });
+  }
+
+  async function cleanBackground() {
+    if (!confirm('确认清除自定义阅读背景？此操作不可撤销。')) return;
+    try {
+      const db = await openDb(DB_NAME, DB_VERSION);
+      await deleteAll(db, 'assets', [BACKGROUND_ASSET_KEY]);
+      db.close();
+      setStatus('✓ 已清除自定义背景', 'ok');
+      render();
+    } catch (e) {
+      setStatus('清除失败：' + (e && e.message), 'error');
+    }
+  }
+
+  async function deleteDatabase() {
+    const text = prompt('危险操作：将删除 ' + DB_NAME + '（以及旧库 ' + LEGACY_DB_NAME + '）。请输入 DELETE 确认：');
+    if (text !== 'DELETE') { setStatus('已取消', ''); return; }
+    const remove = (name) => new Promise((resolve) => {
+      const req = indexedDB.deleteDatabase(name);
+      req.onsuccess = req.onerror = req.onblocked = () => resolve();
+    });
+    await remove(DB_NAME);
+    await remove(LEGACY_DB_NAME);
+    setStatus('✓ 数据库已删除。请刷新阅读器页面（会重新初始化）。注意：此次删除不可恢复，请确保已有备份。', 'ok');
+    render();
+  }
+
+  $('#btn-refresh').addEventListener('click', render);
+  $('#btn-snapshot').addEventListener('click', snapshot);
+  $('#btn-clean-pdf').addEventListener('click', cleanPdf);
+  $('#btn-clean-bg').addEventListener('click', cleanBackground);
+  $('#btn-delete-db').addEventListener('click', deleteDatabase);
+
+  render();
+})();
+</script>
+</body>
+</html>

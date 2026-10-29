@@ -1,0 +1,12 @@
+{
+  "name": "reader",
+  "version": "0.0.6",
+  "private": true,
+  "description": "Reader：纯前端中英双语阅读器（Markdown / PDF，支持笔记、高亮与自定义背景）",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "test:no-isolation": "node --test --test-isolation=none \"tests/*.test.js\"",
+    "check": "node --check app.js && node --check i18n.js && node --check lang-detect.js && node --check pdf-chapters.js && node --check pdf-loader.js && node --check pdf-import.js && node --check pdf-reader.js && node --check background.js"
+  }
+}

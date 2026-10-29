@@ -1,0 +1,141 @@
+/* ==========================================================================
+ * Reader v0.0.6 —— 自定义阅读背景 / 外观设置
+ *
+ * 说明：
+ *   1. 只新增选择器，不覆盖既有组件（.modal / .icon-btn / .upload-btn 等）的样式；
+ *   2. 颜色统一使用 styles.css 的主题变量，自动兼容 light / dark / sepia；
+ *   3. 背景层 z-index 为 0，正文承载层（.layout）抬到 1，
+ *      因此背景图在文字下方，不会遮挡正文，也不需要固定搭配。
+ * ========================================================================== */
+
+/* ---------- 阅读背景层 ---------- */
+.reading-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.reading-bg-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
+
+.reading-bg-shade {
+  position: absolute;
+  inset: 0;
+}
+
+/* 开启背景后：正文区透明以透出图片，并把阅读区抬到背景层之上。
+ * .toolbar / .nav-panel / .notes-panel / .modal 保持各自原有的不透明背景。 */
+body.has-reading-bg .layout {
+  position: relative;
+  z-index: 1;
+}
+
+body.has-reading-bg .layout,
+body.has-reading-bg .content,
+body.has-reading-bg .pane {
+  background: transparent;
+}
+
+/* ---------- 外观设置弹窗 ---------- */
+.appearance-panel {
+  width: 520px;
+  max-width: 90vw;
+  gap: 16px;
+}
+
+.appearance-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.appearance-section + .appearance-section {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.appearance-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* 背景预览：有图时由 js 写入 background-image；无图时 js 写入提示文案，
+ * 所以这里保留居中排版，不使用 ::after 生成占位内容。 */
+.bg-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 140px;
+  padding: 0 12px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  background-color: var(--bg-secondary);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  overflow: hidden;
+}
+
+.appearance-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.appearance-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.appearance-row > span:first-child {
+  flex-shrink: 0;
+}
+
+.appearance-row input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.appearance-value {
+  min-width: 3.2em;
+  text-align: right;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.appearance-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* 窄屏：面板宽度自适应 */
+@media (max-width: 800px) {
+  .appearance-panel {
+    width: auto;
+    max-width: 92vw;
+  }
+}

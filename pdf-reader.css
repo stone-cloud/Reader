@@ -1,0 +1,188 @@
+/* ===========================================================================
+   Reader PDF 阅读器样式（v0.0.6）
+   滚动根：.pdf-pane（由 ReaderPdfReader 在 open() 时添加到容器上）
+   DOM 结构：
+     .pdf-viewer[data-page-count]
+       .pdf-page[data-page][data-rendered]
+         canvas.pdf-canvas
+         .pdf-text-layer[lang]
+         .pdf-page-loading > .pdf-spinner
+         .pdf-page-num
+   文本层的定位/选中规则参考 Mozilla PDF.js（Apache-2.0）的
+   web/text_layer_builder.css，已按本项目精简，仅使用本文件新增的 class。
+   =========================================================================== */
+
+/* 滚动容器：去内边距，由 .pdf-viewer 自己控制留白 */
+.pdf-pane {
+  padding: 0;
+  background: var(--bg);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.pdf-viewer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* 用 flex-start + 子项 margin:auto 居中：页面比容器宽时左缘仍可滚动到 */
+  align-items: flex-start;
+  gap: 16px;
+  min-height: 100%;
+  padding: 16px 0 24px;
+}
+
+/* 尚未确定页数时的加载态 */
+.pdf-viewer[data-page-count="0"] {
+  justify-content: center;
+}
+
+.pdf-viewer-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+
+/* 页面占位与画布 */
+.pdf-page {
+  position: relative;
+  flex: 0 0 auto;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.pdf-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 页脚页码（覆盖在页面右下角空白处） */
+.pdf-page-num {
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  z-index: 4;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.75);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 单页加载指示：只在 JS 加上 .is-loading 时显示，避免大量页动画 */
+.pdf-page-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.pdf-page.is-loading .pdf-page-loading {
+  display: flex;
+}
+
+.pdf-spinner {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: pdf-spinner-rotate 0.9s linear infinite;
+}
+
+.pdf-page-loading .pdf-spinner {
+  width: 22px;
+  height: 22px;
+  border-width: 2px;
+}
+
+@keyframes pdf-spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------------------------------------------------------------------------
+   文本层：透明文字覆盖在画布上，用于选择与高亮。
+   pdf.js 会在元素上写入 width/height（依赖 --scale-factor），
+   这里保留 100% 作为渲染前的兜底。
+   --------------------------------------------------------------------------- */
+.pdf-text-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 2;
+  line-height: 1;
+  text-align: initial;
+  text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  opacity: 1;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.pdf-text-layer span,
+.pdf-text-layer br {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+.pdf-text-layer span.markedContent {
+  top: 0;
+  height: 0;
+}
+
+.pdf-text-layer ::selection {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+.pdf-text-layer ::-moz-selection {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+/* app 在文本层内应用高亮时请使用 <mark>：文本层的 span 定位规则会作用于
+   所有 span，额外包一层 span 会被绝对定位而错位。 */
+.pdf-text-layer mark {
+  color: transparent;
+  background: var(--highlight);
+  border-radius: 1px;
+}
+
+/* 窄屏：减小页间距与页码字号，页面宽度由 JS 的 fit-width 缩放自适应 */
+@media (max-width: 800px) {
+  .pdf-viewer {
+    gap: 10px;
+    padding: 8px 0 16px;
+  }
+
+  .pdf-page-num {
+    font-size: 10px;
+    line-height: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdf-spinner {
+    animation: none;
+  }
+}

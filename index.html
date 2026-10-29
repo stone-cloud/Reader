@@ -6,6 +6,8 @@
   <title>我的阅读器</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="pdf-reader.css">
+  <link rel="stylesheet" href="appearance.css">
   <script src="https://cdn.jsdelivr.net/npm/markdown-it@14/dist/markdown-it.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -24,6 +26,19 @@
         <button data-view="en" data-i18n="toolbar.view-en">English</button>
         <button data-view="both" class="active" data-i18n="toolbar.view-both">对照</button>
       </div>
+      <div id="pdf-controls" class="pdf-controls hidden">
+        <button id="pdf-prev" class="icon-btn" data-i18n-title="pdf.prev" title="上一页">◀</button>
+        <label class="pdf-page-jump">
+          <input id="pdf-page-input" type="number" min="1" step="1" inputmode="numeric" data-i18n-title="pdf.page-input" title="页码">
+          <span id="pdf-page-total">/ 0</span>
+        </label>
+        <button id="pdf-next" class="icon-btn" data-i18n-title="pdf.next" title="下一页">▶</button>
+        <span class="pdf-controls-sep"></span>
+        <button id="pdf-zoom-out" class="icon-btn" data-i18n-title="pdf.zoom-out" title="缩小">－</button>
+        <button id="pdf-zoom-in" class="icon-btn" data-i18n-title="pdf.zoom-in" title="放大">＋</button>
+        <button id="pdf-fit" class="icon-btn active" data-i18n-title="pdf.fit-width" title="适应宽度">↔</button>
+      </div>
+      <div id="pdf-mode-badge" class="pdf-mode-badge hidden" data-i18n="pdf.single-col" data-i18n-title="pdf.single-col-hint" title="PDF 为单语文件，暂不支持中英文对照">PDF · 单栏</div>
     </div>
     <div class="toolbar-right">
       <select id="language-select" class="lang-select" data-i18n-title="toolbar.language" title="切换语言">
@@ -35,6 +50,7 @@
       <button id="font-dec" class="icon-btn" data-i18n-title="toolbar.font-dec" title="减小字号">A-</button>
       <button id="font-inc" class="icon-btn" data-i18n-title="toolbar.font-inc" title="增大字号">A+</button>
       <button id="theme-toggle" class="icon-btn" data-i18n-title="toolbar.theme" title="切换主题">🌓</button>
+      <button id="appearance-toggle" class="icon-btn" data-i18n-title="appearance.title" title="外观设置">🎨</button>
       <button id="upload-book" class="icon-btn" data-i18n-title="toolbar.upload" title="上传书籍">📥</button>
       <button id="toggle-notes" class="icon-btn" data-i18n-title="toolbar.notes" title="笔记">
         📝<span id="backup-badge" class="backup-badge" style="display:none;"></span>
@@ -106,6 +122,7 @@
       <div class="modal-actions">
         <button id="library-export" class="icon-btn" style="margin-right: auto;" data-i18n="library.export-empty" disabled>⬇ 导出选中为仓库包</button>
         <button id="library-delete" class="icon-btn danger" style="margin-right: auto;" data-i18n="library.delete-empty" disabled>🗑 删除选中</button>
+        <span id="app-version" class="app-version"></span>
         <button id="library-close" data-i18n="library.close">关闭</button>
       </div>
     </div>
@@ -117,12 +134,12 @@
       <p class="upload-hint" data-i18n-html="upload.desc"></p>
       <div class="upload-source">
         <label class="upload-btn">
-          <input type="file" id="upload-zip-input" accept=".zip" multiple hidden>
-          <span data-i18n="upload.select-zip">📦 选择 zip（可多选）</span>
-        </label>
-        <label class="upload-btn">
           <input type="file" id="upload-folder-input" webkitdirectory directory multiple hidden>
           <span data-i18n="upload.select-folder">📁 选择父文件夹</span>
+        </label>
+        <label class="upload-btn">
+          <input type="file" id="upload-file-input" accept=".zip,.pdf,application/zip,application/pdf,application/x-pdf" multiple hidden>
+          <span data-i18n="upload.select-files">📄 选择文件（zip / PDF，可多选）</span>
         </label>
       </div>
       <div id="upload-status" class="upload-status"></div>
@@ -130,11 +147,45 @@
       <div class="modal-actions">
         <button id="upload-export-zip" class="icon-btn" style="margin-right: auto;" data-i18n="upload.export" disabled>⬇ 立即导出为仓库包</button>
         <button id="upload-cancel" data-i18n="upload.cancel">取消</button>
-        <button id="upload-import-db" class="primary" data-i18n="upload.preview" disabled>临时预览</button>
+        <button id="upload-import" class="primary" data-i18n="upload.import" disabled>导入书库</button>
       </div>
     </div>
   </div>
 
+  <div id="appearance-dialog" class="modal hidden">
+    <div class="modal-content appearance-panel">
+      <div class="modal-title" data-i18n="appearance.title">外观设置</div>
+      <div class="appearance-section">
+        <div class="appearance-label" data-i18n="appearance.background">阅读背景</div>
+        <div id="bg-preview" class="bg-preview"></div>
+        <div class="appearance-actions">
+          <label class="upload-btn">
+            <input type="file" id="bg-file-input" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden>
+            <span data-i18n="appearance.upload">选择背景图片</span>
+          </label>
+          <button id="bg-clear" class="icon-btn danger" data-i18n="appearance.clear" disabled>清除自定义背景</button>
+        </div>
+        <p class="appearance-hint" data-i18n="appearance.hint"></p>
+      </div>
+      <div class="appearance-section">
+        <label class="appearance-row">
+          <span data-i18n="appearance.overlay">遮罩浓度</span>
+          <input type="range" id="bg-overlay" min="0" max="100" step="1" value="72">
+          <span id="bg-overlay-value" class="appearance-value">72%</span>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button id="appearance-close" class="modal-actions-btn" data-i18n="appearance.close">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="lang-detect.js"></script>
+  <script src="pdf-chapters.js"></script>
+  <script src="pdf-loader.js"></script>
+  <script src="pdf-import.js"></script>
+  <script src="pdf-reader.js"></script>
+  <script src="background.js"></script>
   <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>

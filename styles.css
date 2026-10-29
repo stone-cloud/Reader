@@ -539,3 +539,163 @@ select {
   max-width: 110px;
 }
 .lang-select:focus { outline: none; border-color: var(--accent); }
+
+/* ===== v0.0.6: PDF 模式集成 / 工具栏 ===== */
+.pdf-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pdf-controls.hidden { display: none; }
+.pdf-controls-sep {
+  width: 1px; height: 18px;
+  background: var(--border);
+  margin: 0 2px;
+  display: inline-block;
+}
+.pdf-page-jump {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 13px; color: var(--text-secondary);
+}
+.pdf-page-jump input {
+  width: 58px; text-align: center;
+  padding: 3px 4px;
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 4px;
+  font-size: 13px; font-family: inherit;
+}
+.pdf-page-jump input:focus { outline: none; border-color: var(--accent); }
+.pdf-page-jump input::-webkit-outer-spin-button,
+.pdf-page-jump input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.pdf-page-jump input[type="number"] { -moz-appearance: textfield; }
+
+/* PDF 阅读时隐藏双栏切换与英文栏 */
+body.mode-pdf .view-switch { display: none; }
+body.mode-pdf #pane-en { display: none !important; }
+body.mode-pdf #pane-zh { padding: 0; }
+body.mode-pdf .content { overflow: hidden; }
+
+/* PDF 单栏说明徽标（PDF 模式下替代双栏切换显示，说明暂不支持中英对照） */
+.pdf-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  cursor: help;
+  user-select: none;
+}
+.pdf-mode-badge.hidden { display: none; }
+
+/* 版本号 */
+.app-version {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: 8px;
+  user-select: none;
+}
+
+/* PDF 上传队列卡片（复用多书上传卡片样式） */
+.pdf-toc-pages {
+  float: right;
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.upload-book-error {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #dc2626;
+}
+.upload-book-warn {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  background: var(--bg);
+  border-left: 3px solid var(--accent);
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+.upload-book-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.upload-book-tools label { font-size: 12px; color: var(--text-secondary); }
+.upload-book-tools select {
+  padding: 2px 6px;
+  font-size: 12px;
+  max-width: 180px;
+}
+
+/* 禁用的弹窗按钮必须有明显的视觉区分（此前 primary 禁用后仍像可点击） */
+.modal-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* PDF 错误面板（阅读器加载失败/文件丢失） */
+.pdf-error-panel {
+  max-width: 560px;
+  margin: 48px auto;
+  padding: 24px;
+  text-align: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.pdf-error-panel h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: var(--text);
+}
+.pdf-error-panel p {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+.pdf-error-panel button {
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* PDF 文本层降级 mark 高亮（浏览器不支持 Custom Highlight API 时） */
+.pdf-text-layer mark {
+  background: var(--highlight);
+  color: transparent;
+}
+
+/* ===== v0.0.6: 窄屏工具栏压缩（PDF 控制条与新增按钮不再挤出视口） ===== */
+@media (max-width: 1200px) {
+  .toolbar { padding: 0 6px; }
+  .toolbar-left, .toolbar-center, .toolbar-right { gap: 4px; }
+  .icon-btn { padding: 4px 6px; }
+  #book-select { max-width: 130px; }
+  #chapter-select { max-width: 200px; }
+  .lang-select { max-width: 90px; }
+  .pdf-controls { gap: 2px; }
+  .pdf-controls-sep { margin: 0; }
+  .pdf-page-jump input { width: 46px; }
+}
+@media (max-width: 900px) {
+  .view-switch button { padding: 4px 7px; }
+  #book-select { max-width: 100px; }
+  #chapter-select { max-width: 150px; }
+  .lang-select { max-width: 76px; }
+}

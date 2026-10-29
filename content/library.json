@@ -1,5 +1,5 @@
 {
   "books": [
-    { "id": "fde", "path": "content" }
+    { "id": "guide", "path": "content" }
   ]
 }
